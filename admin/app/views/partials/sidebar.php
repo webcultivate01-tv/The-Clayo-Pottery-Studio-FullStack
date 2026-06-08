@@ -15,7 +15,6 @@ $navGroups = [
         ['label' => 'Enquiries',     'path' => '/enquiries',     'icon' => 'message-square'],
         ['label' => 'Services',      'path' => '/services',      'icon' => 'sparkles'],
         ['label' => 'Gallery',       'path' => '/gallery',       'icon' => 'image'],
-        ['label' => 'Events',        'path' => '/events',        'icon' => 'calendar-days'],
         ['label' => 'Popups',        'path' => '/popups',        'icon' => 'message-square-dashed'],
     ],
     'Team' => [

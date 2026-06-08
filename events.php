@@ -177,7 +177,6 @@ $past     = array_values(array_filter($eventItems, fn($e) => !empty($e['event_da
                 <li><a href="index.php"    class="nav-link text-sm font-medium text-muted transition-colors">Home</a></li>
                 <li><a href="about.php"    class="nav-link text-sm font-medium text-muted transition-colors">About</a></li>
                 <li><a href="services.php" class="nav-link text-sm font-medium text-muted transition-colors">Workshops</a></li>
-                <li><a href="events.php"   class="nav-link active text-sm font-medium text-brown transition-colors">Events</a></li>
                 <li><a href="gallery.php"  class="nav-link text-sm font-medium text-muted transition-colors">Gallery</a></li>
                 <li><a href="contact.php"  class="nav-link text-sm font-medium text-muted transition-colors">Contact</a></li>
                 <li class="ml-6"><a href="contact.php" class="btn-primary text-sm">Book Now</a></li>
@@ -208,7 +207,6 @@ $past     = array_values(array_filter($eventItems, fn($e) => !empty($e['event_da
         <a href="index.php"><i class="fa-solid fa-house"></i> Home</a>
         <a href="about.php"><i class="fa-solid fa-circle-info"></i> About</a>
         <a href="services.php"><i class="fa-solid fa-fire-flame-curved"></i> Workshops</a>
-        <a href="events.php" class="active"><i class="fa-regular fa-calendar"></i> Events</a>
         <a href="gallery.php"><i class="fa-solid fa-images"></i> Gallery</a>
         <a href="contact.php"><i class="fa-solid fa-envelope"></i> Contact</a>
     </nav>

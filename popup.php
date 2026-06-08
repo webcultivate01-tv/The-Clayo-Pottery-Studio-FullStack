@@ -82,7 +82,7 @@ if ($clayoPopup):
     .clayo-popup-overlay.clayo-open { display: flex; opacity: 1; }
     .clayo-popup {
         position: relative; width: 100%; max-width: 440px;
-        max-height: 90vh; overflow-y: auto;
+        max-height: 90vh; overflow: hidden;
         background: #faf6f0; border-radius: 24px;
         box-shadow: 0 30px 80px rgba(28, 18, 12, 0.35);
         transform: translateY(16px) scale(.98);

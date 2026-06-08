@@ -865,13 +865,6 @@ if (!function_exists('clayo_e')) {
             </li>
             <li>
               <a
-                href="events.php"
-                class="nav-link text-sm font-medium text-muted transition-colors"
-                >Events</a
-              >
-            </li>
-            <li>
-              <a
                 href="gallery.php"
                 class="nav-link active text-sm font-medium text-brown transition-colors"
                 >Gallery</a
@@ -933,7 +926,6 @@ if (!function_exists('clayo_e')) {
         <a href="services.php"
           ><i class="fa-solid fa-fire-flame-curved"></i> Workshops</a
         >
-        <a href="events.php"><i class="fa-regular fa-calendar"></i> Events</a>
         <a href="gallery.php" class="active"
           ><i class="fa-solid fa-images"></i> Gallery</a
         >

@@ -810,13 +810,6 @@
             </li>
             <li>
               <a
-                href="events.php"
-                class="nav-link text-sm font-medium text-muted transition-colors"
-                >Events</a
-              >
-            </li>
-            <li>
-              <a
                 href="gallery.php"
                 class="nav-link text-sm font-medium text-muted transition-colors"
                 >Gallery</a
@@ -878,7 +871,6 @@
         <a href="services.php"
           ><i class="fa-solid fa-fire-flame-curved"></i> Workshops</a
         >
-        <a href="events.php"><i class="fa-regular fa-calendar"></i> Events</a>
         <a href="gallery.php"><i class="fa-solid fa-images"></i> Gallery</a>
         <a href="contact.php" class="active"
           ><i class="fa-solid fa-envelope"></i> Contact</a
