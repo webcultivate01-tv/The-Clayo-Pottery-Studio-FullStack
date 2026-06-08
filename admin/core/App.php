@@ -1,0 +1,32 @@
+<?php
+declare(strict_types=1);
+
+namespace Calyo\Core;
+
+final class App
+{
+    private static array $config = [];
+
+    public static function boot(array $config): void
+    {
+        self::$config = $config;
+    }
+
+    public static function config(string $key, mixed $default = null): mixed
+    {
+        $parts = explode('.', $key);
+        $value = self::$config;
+        foreach ($parts as $part) {
+            if (!is_array($value) || !array_key_exists($part, $value)) {
+                return $default;
+            }
+            $value = $value[$part];
+        }
+        return $value;
+    }
+
+    public static function basePath(string $path = ''): string
+    {
+        return rtrim(self::$config['base_path'] ?? '', '/') . '/' . ltrim($path, '/');
+    }
+}

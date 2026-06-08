@@ -549,19 +549,104 @@
         transform: scale(1.1);
       }
 
-      /* SUCCESS */
-      .success-banner {
-        background: linear-gradient(135deg, #d4edda, #c3e6cb);
-        border: 1px solid #b1dfbb;
-        border-radius: 14px;
-        padding: 16px 20px;
+      /* SUCCESS POPUP */
+      .success-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.55);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
         display: none;
         align-items: center;
-        gap: 12px;
+        justify-content: center;
+        z-index: 9999;
+        padding: 20px;
+        opacity: 0;
+        transition: opacity 0.2s ease;
       }
-      .success-banner.show {
+      .success-overlay.show {
         display: flex;
+        opacity: 1;
       }
+      .success-popup {
+        background: #fff;
+        border-radius: 20px;
+        padding: 40px 32px 32px;
+        max-width: 420px;
+        width: 100%;
+        text-align: center;
+        position: relative;
+        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+        transform: scale(0.92);
+        transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      .success-overlay.show .success-popup {
+        transform: scale(1);
+      }
+      .success-popup-close {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        border: none;
+        background: #f1f5f9;
+        color: #475569;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.15s, color 0.15s;
+      }
+      .success-popup-close:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+      }
+      .success-popup-icon {
+        width: 76px;
+        height: 76px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #34d399, #10b981);
+        margin: 0 auto 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 10px 25px rgba(16, 185, 129, 0.35);
+        animation: pop-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      @keyframes pop-in {
+        0%   { transform: scale(0); }
+        100% { transform: scale(1); }
+      }
+      .success-popup h3 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0 0 8px;
+      }
+      .success-popup p {
+        color: #475569;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        margin: 0 0 22px;
+      }
+      .success-popup-btn {
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        color: #fff;
+        border: none;
+        padding: 12px 28px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: transform 0.15s, box-shadow 0.15s;
+      }
+      .success-popup-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 20px rgba(99, 102, 241, 0.35);
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
 
       /* MOBILE RESPONSIVE */
       @media (max-width: 1024px) {
@@ -704,41 +789,48 @@
           <ul class="desktop-nav hidden md:flex items-center">
             <li>
               <a
-                href="index.html"
+                href="index.php"
                 class="nav-link text-sm font-medium text-muted transition-colors"
                 >Home</a
               >
             </li>
             <li>
               <a
-                href="about.html"
+                href="about.php"
                 class="nav-link text-sm font-medium text-muted transition-colors"
                 >About</a
               >
             </li>
             <li>
               <a
-                href="services.html"
+                href="services.php"
                 class="nav-link text-sm font-medium text-muted transition-colors"
                 >Workshops</a
               >
             </li>
             <li>
               <a
-                href="gallery.html"
+                href="events.php"
+                class="nav-link text-sm font-medium text-muted transition-colors"
+                >Events</a
+              >
+            </li>
+            <li>
+              <a
+                href="gallery.php"
                 class="nav-link text-sm font-medium text-muted transition-colors"
                 >Gallery</a
               >
             </li>
             <li>
               <a
-                href="contact.html"
+                href="contact.php"
                 class="nav-link active text-sm font-medium text-brown transition-colors"
                 >Contact</a
               >
             </li>
             <li class="ml-6">
-              <a href="contact.html" class="btn-primary text-sm">Book Now</a>
+              <a href="contact.php" class="btn-primary text-sm">Book Now</a>
             </li>
           </ul>
           <button
@@ -781,19 +873,20 @@
         </button>
       </div>
       <nav class="drawer-nav">
-        <a href="index.html"><i class="fa-solid fa-house"></i> Home</a>
-        <a href="about.html"><i class="fa-solid fa-circle-info"></i> About</a>
-        <a href="services.html"
+        <a href="index.php"><i class="fa-solid fa-house"></i> Home</a>
+        <a href="about.php"><i class="fa-solid fa-circle-info"></i> About</a>
+        <a href="services.php"
           ><i class="fa-solid fa-fire-flame-curved"></i> Workshops</a
         >
-        <a href="gallery.html"><i class="fa-solid fa-images"></i> Gallery</a>
-        <a href="contact.html" class="active"
+        <a href="events.php"><i class="fa-regular fa-calendar"></i> Events</a>
+        <a href="gallery.php"><i class="fa-solid fa-images"></i> Gallery</a>
+        <a href="contact.php" class="active"
           ><i class="fa-solid fa-envelope"></i> Contact</a
         >
       </nav>
       <div class="drawer-footer">
         <a
-          href="contact.html"
+          href="contact.php"
           class="btn-primary"
           style="
             display: flex;
@@ -1143,7 +1236,7 @@
     </section>
 
     <!-- CONTACT MAIN SECTION -->
-    <section class="py-16 bg-white">
+    <section id="bookingForm" class="py-16 bg-white">
       <div class="max-w-6xl mx-auto px-6">
         <div class="grid lg:grid-cols-2 gap-10 items-start contact-main-grid">
           <!-- INFO SIDE -->
@@ -2159,7 +2252,7 @@
             >
               <li>
                 <a
-                  href="index.html"
+                  href="index.php"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -2177,7 +2270,7 @@
               </li>
               <li>
                 <a
-                  href="about.html"
+                  href="about.php"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -2195,7 +2288,7 @@
               </li>
               <li>
                 <a
-                  href="workshops.html"
+                  href="services.php"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -2213,7 +2306,7 @@
               </li>
               <li>
                 <a
-                  href="gallery.html"
+                  href="gallery.php"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -2231,7 +2324,7 @@
               </li>
               <li>
                 <a
-                  href="contact.html"
+                  href="contact.php"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -2249,7 +2342,7 @@
               </li>
               <li>
                 <a
-                  href="contact.html#bookingForm"
+                  href="contact.php#bookingForm"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -2294,7 +2387,7 @@
             >
               <li>
                 <a
-                  href="workshops.html"
+                  href="services.php"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -2312,7 +2405,7 @@
               </li>
               <li>
                 <a
-                  href="workshops.html"
+                  href="services.php"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -2330,7 +2423,7 @@
               </li>
               <li>
                 <a
-                  href="workshops.html"
+                  href="services.php"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -2348,7 +2441,7 @@
               </li>
               <li>
                 <a
-                  href="workshops.html"
+                  href="services.php"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -2366,7 +2459,7 @@
               </li>
               <li>
                 <a
-                  href="workshops.html"
+                  href="services.php"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -2384,7 +2477,7 @@
               </li>
               <li>
                 <a
-                  href="workshops.html"
+                  href="services.php"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -2641,6 +2734,21 @@
       <i class="fa-brands fa-whatsapp text-white text-2xl"></i>
     </a>
 
+    <!-- BOOKING SUCCESS POPUP -->
+    <div id="successOverlay" class="success-overlay" role="dialog" aria-modal="true" aria-labelledby="successTitle">
+      <div class="success-popup">
+        <button type="button" class="success-popup-close" onclick="closeSuccessPopup()" aria-label="Close">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+        <div class="success-popup-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        </div>
+        <h3 id="successTitle">Booking Successful</h3>
+        <p>We've received your booking request. Our team will contact you on WhatsApp/phone shortly to confirm your seat.</p>
+        <button type="button" class="success-popup-btn" onclick="closeSuccessPopup()">Done</button>
+      </div>
+    </div>
+
     <script>
       // Navbar scroll shadow
       const navbar = document.getElementById("navbar");
@@ -2693,39 +2801,126 @@
       }
       window.toggleFaq = toggleFaq;
 
+      // Prefill service from ?service=... (set when arriving from the Enroll
+      // button on services.php). Selects a matching option, or prepends one
+      // when no match exists so any admin-added item is honoured.
+      (function prefillServiceFromQuery() {
+        const params = new URLSearchParams(window.location.search);
+        const requested = (params.get('service') || '').trim();
+        if (!requested) return;
+
+        const select = document.getElementById('fservice');
+        if (!select) return;
+
+        const wanted = requested.toLowerCase();
+        let matched = null;
+        for (const opt of select.options) {
+          if (opt.value && opt.text.trim().toLowerCase() === wanted) {
+            matched = opt;
+            break;
+          }
+        }
+
+        if (matched) {
+          select.value = matched.value || matched.text;
+        } else {
+          const opt = document.createElement('option');
+          opt.text = requested;
+          opt.value = requested;
+          opt.selected = true;
+          const firstGroup = select.querySelector('optgroup');
+          if (firstGroup) {
+            select.insertBefore(opt, firstGroup);
+          } else {
+            select.appendChild(opt);
+          }
+          select.value = requested;
+        }
+
+        const target = document.getElementById('bookingForm');
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      })();
+
       // Form Submit
-      function submitForm() {
-        const name = document.getElementById("fname").value.trim();
-        const phone = document.getElementById("fphone").value.trim();
+      async function submitForm() {
+        const name    = document.getElementById("fname").value.trim();
+        const phone   = document.getElementById("fphone").value.trim();
         const service = document.getElementById("fservice").value;
-        const agree = document.getElementById("fagree").checked;
+        const pdate   = document.getElementById("fdate").value;
+        const ptime   = document.getElementById("ftime").value;
+        const agree   = document.getElementById("fagree").checked;
 
-        if (!name) {
-          alert("Please enter your full name.");
-          return;
-        }
-        if (!phone) {
-          alert("Please enter your phone number.");
-          return;
-        }
-        if (!service) {
-          alert("Please select a workshop or service.");
-          return;
-        }
-        if (!agree) {
-          alert("Please agree to our contact terms to proceed.");
-          return;
-        }
+        if (!name)    { alert("Please enter your full name."); return; }
+        if (!phone)   { alert("Please enter your phone number."); return; }
+        if (!service) { alert("Please select a workshop or service."); return; }
+        if (!pdate)   { alert("Please select your preferred date."); return; }
+        if (!ptime)   { alert("Please select your preferred time."); return; }
+        if (!agree)   { alert("Please agree to our contact terms to proceed."); return; }
 
-        document.getElementById("successMsg").classList.add("show");
-        const fields = document.getElementById("formFields");
-        fields.style.opacity = "0.4";
-        fields.style.pointerEvents = "none";
-        document
-          .getElementById("successMsg")
-          .scrollIntoView({ behavior: "smooth", block: "nearest" });
+        const btn = document.querySelector('[onclick="submitForm()"]');
+        const origHTML = btn.innerHTML;
+        btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="animation:spin 0.8s linear infinite;display:inline-block;margin-right:6px"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2.5" stroke-dasharray="42" stroke-dashoffset="14" stroke-linecap="round"/></svg> Sending…';
+        btn.disabled = true;
+
+        try {
+          const res = await fetch('./booking-submit.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              customer_name:  name,
+              phone:          phone,
+              email:          document.getElementById("femail").value.trim(),
+              dob:            document.getElementById("fdob").value,
+              address:        document.getElementById("faddress").value.trim(),
+              service:        service,
+              preferred_date: pdate,
+              preferred_time: ptime,
+              message:        document.getElementById("fmessage").value.trim(),
+            }),
+          });
+
+          const data = await res.json();
+          if (data.ok) {
+            openSuccessPopup();
+            ["fname","fphone","femail","fdob","faddress","fservice","fdate","ftime","fmessage"].forEach(id => {
+              const el = document.getElementById(id);
+              if (el) el.value = "";
+            });
+            const agreeEl = document.getElementById("fagree");
+            if (agreeEl) agreeEl.checked = false;
+            btn.innerHTML = origHTML;
+            btn.disabled = false;
+          } else {
+            alert(data.message || "Something went wrong. Please try again.");
+            btn.innerHTML = origHTML;
+            btn.disabled = false;
+          }
+        } catch (err) {
+          alert("Could not connect to the server. Please call us directly at +91 97247 88561.");
+          btn.innerHTML = origHTML;
+          btn.disabled = false;
+        }
       }
       window.submitForm = submitForm;
+
+      // Success popup controls
+      function openSuccessPopup() {
+        const overlay = document.getElementById("successOverlay");
+        overlay.classList.add("show");
+        document.body.style.overflow = "hidden";
+      }
+      function closeSuccessPopup() {
+        const overlay = document.getElementById("successOverlay");
+        overlay.classList.remove("show");
+        document.body.style.overflow = "";
+      }
+      window.closeSuccessPopup = closeSuccessPopup;
+      document.getElementById("successOverlay").addEventListener("click", (e) => {
+        if (e.target.id === "successOverlay") closeSuccessPopup();
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeSuccessPopup();
+      });
 
       // Scroll Reveal
       const revealObs = new IntersectionObserver(
@@ -2743,5 +2938,6 @@
         .querySelectorAll(".reveal, .reveal-left, .reveal-right, .reveal-scale")
         .forEach((el) => revealObs.observe(el));
     </script>
+  <?php include __DIR__ . '/popup.php'; ?>
   </body>
 </html>

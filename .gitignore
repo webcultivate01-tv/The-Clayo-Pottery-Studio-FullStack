@@ -1,0 +1,22 @@
+# Local environment & secrets
+admin/config/mail.php
+admin/config/database.php
+
+# Storage / uploads / logs
+admin/storage/logs/*
+admin/storage/cache/*
+admin/storage/sessions/*
+admin/public/uploads/*
+!admin/storage/**/.gitkeep
+!admin/public/uploads/.gitkeep
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
+
+# Composer (if added later)
+vendor/
+composer.lock

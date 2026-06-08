@@ -636,41 +636,48 @@
           <ul class="desktop-nav hidden md:flex items-center">
             <li>
               <a
-                href="index.html"
+                href="index.php"
                 class="nav-link text-sm font-medium text-muted transition-colors"
                 >Home</a
               >
             </li>
             <li>
               <a
-                href="about.html"
+                href="about.php"
                 class="nav-link active text-sm font-medium text-brown transition-colors"
                 >About</a
               >
             </li>
             <li>
               <a
-                href="services.html"
+                href="services.php"
                 class="nav-link text-sm font-medium text-muted transition-colors"
                 >Workshops</a
               >
             </li>
             <li>
               <a
-                href="gallery.html"
+                href="events.php"
+                class="nav-link text-sm font-medium text-muted transition-colors"
+                >Events</a
+              >
+            </li>
+            <li>
+              <a
+                href="gallery.php"
                 class="nav-link text-sm font-medium text-muted transition-colors"
                 >Gallery</a
               >
             </li>
             <li>
               <a
-                href="contact.html"
+                href="contact.php"
                 class="nav-link text-sm font-medium text-muted transition-colors"
                 >Contact</a
               >
             </li>
             <li class="ml-6">
-              <a href="contact.html" class="btn-primary text-sm">Book Now</a>
+              <a href="contact.php" class="btn-primary text-sm">Book Now</a>
             </li>
           </ul>
           <button
@@ -716,19 +723,20 @@
         </button>
       </div>
       <nav class="drawer-nav">
-        <a href="index.html"><i class="fa-solid fa-house"></i> Home</a>
-        <a href="about.html" class="active"
+        <a href="index.php"><i class="fa-solid fa-house"></i> Home</a>
+        <a href="about.php" class="active"
           ><i class="fa-solid fa-circle-info"></i> About</a
         >
-        <a href="services.html"
+        <a href="services.php"
           ><i class="fa-solid fa-fire-flame-curved"></i> Workshops</a
         >
-        <a href="gallery.html"><i class="fa-solid fa-images"></i> Gallery</a>
-        <a href="contact.html"><i class="fa-solid fa-envelope"></i> Contact</a>
+        <a href="events.php"><i class="fa-regular fa-calendar"></i> Events</a>
+        <a href="gallery.php"><i class="fa-solid fa-images"></i> Gallery</a>
+        <a href="contact.php"><i class="fa-solid fa-envelope"></i> Contact</a>
       </nav>
       <div class="drawer-footer">
         <a
-          href="contact.html"
+          href="contact.php"
           class="btn-primary"
           style="
             display: flex;
@@ -807,12 +815,12 @@
   through immersive workshops and premium ceramic training.
 </p>
       <div class="flex gap-4 flex-wrap">
-        <a href="contact.html" class="btn-primary">
+        <a href="contact.php" class="btn-primary">
           <i class="fa-regular fa-calendar-check"></i>
           Book a Workshop
         </a>
 
-        <a href="services.html" class="btn-outline">
+        <a href="services.php" class="btn-outline">
           Our Workshops
         </a>
       </div>
@@ -1460,7 +1468,7 @@
 
         <!-- CTA -->
         <a
-          href="contact.html"
+          href="contact.php"
           style="
             display:inline-flex;
             align-items:center;
@@ -2628,7 +2636,7 @@
           born.
         </p>
         <div class="flex flex-wrap gap-4 justify-center reveal">
-          <a href="contact.html" class="btn-primary text-base px-8 py-4"
+          <a href="contact.php" class="btn-primary text-base px-8 py-4"
             ><i class="fa-regular fa-calendar-check"></i>Book a Workshop</a
           >
           <a href="tel:+919724788561" class="btn-outline text-base px-8 py-4"
@@ -2734,13 +2742,13 @@
         </h5>
 
         <ul class="footer-links">
-          <li><a href="index.html">› Home</a></li>
-          <li><a href="about.html">› About Us</a></li>
-          <li><a href="workshops.html">› Workshops</a></li>
-          <li><a href="gallery.html">› Gallery</a></li>
-          <li><a href="contact.html">› Contact</a></li>
+          <li><a href="index.php">› Home</a></li>
+          <li><a href="about.php">› About Us</a></li>
+          <li><a href="services.php">› Workshops</a></li>
+          <li><a href="gallery.php">› Gallery</a></li>
+          <li><a href="contact.php">› Contact</a></li>
           <li>
-            <a href="contact.html#bookingForm">
+            <a href="contact.php#bookingForm">
               › Book a Seat
             </a>
           </li>
@@ -2755,37 +2763,37 @@
 
         <ul class="footer-links">
           <li>
-            <a href="workshops.html">
+            <a href="services.php">
               › Beginner Wheel Throwing
             </a>
           </li>
 
           <li>
-            <a href="workshops.html">
+            <a href="services.php">
               › Hand-Building Class
             </a>
           </li>
 
           <li>
-            <a href="workshops.html">
+            <a href="services.php">
               › Kids Pottery Camp
             </a>
           </li>
 
           <li>
-            <a href="workshops.html">
+            <a href="services.php">
               › Corporate Team Workshop
             </a>
           </li>
 
           <li>
-            <a href="workshops.html">
+            <a href="services.php">
               › Couples Experience
             </a>
           </li>
 
           <li>
-            <a href="workshops.html">
+            <a href="services.php">
               › Custom Ceramic Orders
             </a>
           </li>
@@ -3197,5 +3205,6 @@
         }
       }
     </script>
+  <?php include __DIR__ . '/popup.php'; ?>
   </body>
 </html>

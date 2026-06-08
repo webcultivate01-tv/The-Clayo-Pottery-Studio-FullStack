@@ -1,14 +1,82 @@
+<?php
+/**
+ * Gallery images are managed from the admin panel (Admin → Gallery).
+ * Each row is either an uploaded file (stored under /public) or a direct
+ * external URL. We read the active ones here and render the masonry grid
+ * from the database. Self-contained DB read, mirrors popup.php.
+ */
+$galleryImages = [];
+// Default category labels (slug => label). Overridden below from the
+// gallery_categories table when it is available, so the admin's
+// "Manage Categories" changes flow through to this page.
+$galleryCategoryLabels = [
+    'mugs'      => 'Mugs & Cups',
+    'bowls'     => 'Bowls',
+    'vases'     => 'Vases',
+    'sculpture' => 'Sculpture',
+    'workshop'  => 'Workshop',
+    'studio'    => 'Studio',
+];
+try {
+    $db   = require __DIR__ . '/admin/config/database.php';
+    $dsn  = "mysql:host={$db['host']};port={$db['port']};dbname={$db['database']};charset={$db['charset']}";
+    $pdo  = new PDO($dsn, $db['username'], $db['password'], $db['options']);
+
+    // Pull active categories (own guard: a pre-migration DB keeps the defaults).
+    try {
+        $catRows = $pdo->query(
+            "SELECT slug, label FROM gallery_categories
+             WHERE is_active = 1
+             ORDER BY sort_order ASC, label ASC"
+        )->fetchAll();
+        if ($catRows) {
+            $galleryCategoryLabels = [];
+            foreach ($catRows as $cat) {
+                $galleryCategoryLabels[(string) $cat['slug']] = (string) $cat['label'];
+            }
+        }
+    } catch (Throwable $e) {
+        // gallery_categories not present — keep the defaults above.
+    }
+
+    $stmt = $pdo->query(
+        "SELECT title, category, source_type, image_path, image_url
+         FROM gallery_images
+         WHERE is_active = 1
+         ORDER BY sort_order ASC, created_at DESC"
+    );
+    foreach ($stmt->fetchAll() as $row) {
+        $src = ($row['source_type'] === 'url')
+            ? trim((string) ($row['image_url'] ?? ''))
+            : (!empty($row['image_path']) ? 'public/' . ltrim((string) $row['image_path'], '/') : '');
+        if ($src === '') continue;
+        $slug = (string) $row['category'];
+        $row['src']           = $src;
+        $row['slug']          = $slug;
+        $row['categoryLabel'] = $galleryCategoryLabels[$slug] ?? ucfirst($slug);
+        $galleryImages[]      = $row;
+    }
+} catch (Throwable $e) {
+    $galleryImages = [];
+}
+
+if (!function_exists('clayo_e')) {
+    function clayo_e(?string $v): string {
+        return htmlspecialchars((string) $v, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    }
+}
+?>
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>
-      Workshops – The Clayo Pottery Studio | Pottery & Ceramic Classes Amravati
+      Gallery – The Clayo Pottery Studio | Our Handcrafted Creations
     </title>
     <meta
       name="description"
-      content="Explore all pottery workshops at The Clayo Pottery Studio, Amravati. Wheel Throwing, Hand Building, Glazing, Sculpture, Kids Pottery and Corporate Sessions."
+      content="Explore the gallery of handcrafted pottery and ceramic creations from The Clayo Pottery Studio, Amravati. Browse our mugs, bowls, vases, sculptures and studio workspace."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -81,7 +149,6 @@
         position: relative !important;
         top: auto !important;
         z-index: auto !important;
-        background: rgba(255, 255, 255, 0.98) !important;
       }
       body {
         padding-top: var(--header-height, 114px);
@@ -120,7 +187,7 @@
       /* Scroll Reveal */
       .reveal {
         opacity: 0;
-        transform: translateY(36px);
+        transform: translateY(32px);
         transition:
           opacity 0.7s ease,
           transform 0.7s ease;
@@ -131,7 +198,7 @@
       }
       .reveal-left {
         opacity: 0;
-        transform: translateX(-40px);
+        transform: translateX(-36px);
         transition:
           opacity 0.7s ease,
           transform 0.7s ease;
@@ -142,7 +209,7 @@
       }
       .reveal-right {
         opacity: 0;
-        transform: translateX(40px);
+        transform: translateX(36px);
         transition:
           opacity 0.7s ease,
           transform 0.7s ease;
@@ -155,22 +222,12 @@
         opacity: 0;
         transform: scale(0.93);
         transition:
-          opacity 0.7s ease,
-          transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+          opacity 0.65s ease,
+          transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
       }
       .reveal-scale.revealed {
         opacity: 1;
         transform: scale(1);
-      }
-
-      .card-hover {
-        transition:
-          transform 0.3s ease,
-          box-shadow 0.3s ease;
-      }
-      .card-hover:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 20px 50px rgba(80, 40, 20, 0.12);
       }
 
       .section-tag {
@@ -193,6 +250,7 @@
         border-radius: 100px;
         font-size: 0.92rem;
         font-weight: 500;
+        font-family: "Inter", sans-serif;
         letter-spacing: 0.03em;
         transition: all 0.25s;
       }
@@ -215,20 +273,6 @@
         background: #5c3820;
         color: #faf6f0;
         transform: translateY(-2px);
-      }
-      .btn-sm {
-        display: inline-block;
-        background: #5c3820;
-        color: #faf6f0;
-        padding: 10px 22px;
-        border-radius: 100px;
-        font-size: 0.82rem;
-        font-weight: 500;
-        transition: all 0.2s;
-        white-space: nowrap;
-      }
-      .btn-sm:hover {
-        background: #b8793a;
       }
 
       .hamburger-bar {
@@ -384,64 +428,203 @@
         gap: 20px;
       }
 
-      /* Workshop card styles */
-      .srv-detail {
-        border-left: 4px solid transparent;
-        transition: all 0.3s;
+      /* Gallery Masonry Grid */
+      .gallery-grid {
+        columns: 3;
+        column-gap: 16px;
       }
-      .srv-detail:hover {
-        border-left-color: #b8793a;
+      @media (max-width: 1024px) {
+        .gallery-grid {
+          columns: 2;
+        }
       }
-      .cat-divider {
-        border-bottom: 2px solid #e8d0a8;
-        padding-bottom: 14px;
-        margin-bottom: 28px;
+      @media (max-width: 540px) {
+        .gallery-grid {
+          columns: 1;
+        }
       }
-      .cat-divider h2 {
-        font-family: "Playfair Display", serif;
-        font-size: 1.6rem;
-        font-weight: 700;
-        color: #5c3820;
-      }
-      .price-badge {
-        background: #faf6f0;
-        color: #5c3820;
-        font-size: 0.8rem;
-        padding: 4px 14px;
-        border-radius: 100px;
-        font-weight: 500;
-        border: 1px solid #e8d0a8;
-      }
-      .time-badge {
-        background: #f5ede0;
-        color: #8a7060;
-        font-size: 0.8rem;
-        padding: 4px 14px;
-        border-radius: 100px;
-      }
-      .srv-img-sm {
-        width: 80px;
-        height: 80px;
-        border-radius: 14px;
-        object-fit: cover;
-        flex-shrink: 0;
+      .gallery-item {
+        break-inside: avoid;
+        margin-bottom: 16px;
       }
 
-      /* Why choose cards */
-      .why-img-card {
-        border-radius: 20px;
-        overflow: hidden;
+      /* Gallery Card */
+      .g-card {
         position: relative;
+        border-radius: 16px;
+        overflow: hidden;
+        cursor: pointer;
+        display: block;
+        background: #e8d5b0;
       }
-      .why-img-card img {
+      .g-card img {
         width: 100%;
-        height: 200px;
+        display: block;
         object-fit: cover;
         transition: transform 0.5s ease;
+        min-height: 180px;
+        background: #e8d0a8;
+      }
+      .g-card:hover img {
+        transform: scale(1.06);
+      }
+      .g-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(44, 31, 20, 0);
+        transition: background 0.3s;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        justify-content: flex-end;
+        padding: 16px;
+      }
+      .g-card:hover .g-overlay {
+        background: rgba(44, 31, 20, 0.55);
+      }
+      .g-overlay-content {
+        opacity: 0;
+        transform: translateY(8px);
+        transition: all 0.3s;
+        color: white;
+        text-align: right;
+      }
+      .g-card:hover .g-overlay-content {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .g-tag {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        background: rgba(255, 255, 255, 0.92);
+        color: #5c3820;
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 4px 12px;
+        border-radius: 100px;
+      }
+
+      /* Filter Buttons */
+      .filter-btn {
+        background: white;
+        border: 1.5px solid #e8d0a8;
+        color: #8a7060;
+        padding: 9px 20px;
+        border-radius: 100px;
+        font-size: 0.82rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: "Inter", sans-serif;
+        white-space: nowrap;
+      }
+      .filter-btn.active,
+      .filter-btn:hover {
+        background: #5c3820;
+        color: #faf6f0;
+        border-color: #5c3820;
+      }
+
+      /* LIGHTBOX */
+      .lightbox {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: rgba(10, 6, 3, 0.96);
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      .lightbox.open {
+        display: flex;
+      }
+      .lb-inner {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        max-width: min(90vw, 900px);
+        width: 100%;
+      }
+      .lb-img {
+        width: 100%;
+        max-height: 72vh;
+        object-fit: contain;
+        border-radius: 14px;
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
         display: block;
       }
-      .why-img-card:hover img {
-        transform: scale(1.06);
+      .lb-caption {
+        margin-top: 18px;
+        text-align: center;
+        color: white;
+        width: 100%;
+      }
+      .lb-caption h4 {
+        font-family: "Playfair Display", serif;
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin: 0 0 4px;
+      }
+      .lb-caption p {
+        font-size: 0.82rem;
+        color: rgba(255, 255, 255, 0.55);
+        margin: 0;
+      }
+      .lb-close {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.55);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
+        z-index: 10000;
+      }
+      .lb-close:hover {
+        background: rgba(0, 0, 0, 0.85);
+      }
+      .lb-prev,
+      .lb-next {
+        position: fixed;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.55);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.9rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
+        z-index: 10000;
+      }
+      .lb-prev {
+        left: 16px;
+      }
+      .lb-next {
+        right: 16px;
+      }
+      .lb-prev:hover,
+      .lb-next:hover {
+        background: rgba(0, 0, 0, 0.85);
       }
 
       .cta-section {
@@ -502,35 +685,34 @@
         transform: scale(1.1);
       }
 
-      @media (max-width: 1024px) {
-        section {
-          padding: 60px 24px !important;
-        }
+      /* Navbar */
+      #navbar {
+        background: rgba(255, 255, 255, 0.98) !important;
       }
-      @media (max-width: 768px) {
-        .srv-detail {
-          flex-direction: column !important;
-          gap: 16px !important;
+
+      @media (max-width: 640px) {
+        .topbar-inner {
+          justify-content: center;
+          padding: 0 16px;
         }
-        .srv-img-sm {
-          width: 100% !important;
-          height: 200px !important;
-          border-radius: 12px !important;
+        .topbar-left {
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 8px 16px;
         }
-        .btn-sm {
-          align-self: flex-start;
-          width: 100%;
-          text-align: center;
+        .topbar-right {
+          display: none !important;
         }
         .topbar {
-          font-size: 0.72rem;
-          padding: 6px 0;
+          text-align: center;
         }
-        .grid {
-          gap: 16px;
+        .lb-img {
+          max-height: 60vh;
+          border-radius: 10px;
         }
-      }
-      @media (max-width: 640px) {
+        .lb-caption h4 {
+          font-size: 0.95rem;
+        }
         section {
           overflow-x: hidden;
           padding: 50px 20px !important;
@@ -543,6 +725,9 @@
         .reveal-right.revealed {
           transform: translateY(0) !important;
         }
+        .gallery-grid {
+          columns: 1;
+        }
         h1 {
           font-size: 2.2rem !important;
           line-height: 1.2 !important;
@@ -550,23 +735,19 @@
         h2 {
           font-size: 1.6rem !important;
         }
-        .srv-detail {
-          padding: 20px !important;
-        }
-        .srv-img-sm {
-          height: 180px !important;
+        .flex.gap-4 {
+          flex-direction: column;
+          gap: 12px;
         }
         .btn-primary,
-        .btn-outline,
-        .btn-sm {
-          font-size: 0.88rem;
-          padding: 12px 24px;
-        }
-        .topbar-right {
-          display: none !important;
-        }
-        .topbar {
+        .btn-outline {
+          width: 100%;
           text-align: center;
+          justify-content: center;
+        }
+        .filter-btn {
+          font-size: 0.78rem;
+          padding: 8px 16px;
         }
       }
       @media (max-width: 480px) {
@@ -576,8 +757,29 @@
         h1 {
           font-size: 1.8rem !important;
         }
-        .srv-img-sm {
-          height: 160px !important;
+        .filter-btn {
+          font-size: 0.75rem;
+          padding: 7px 14px;
+        }
+      }
+      @media (max-width: 768px) {
+        .topbar {
+          font-size: 0.72rem;
+          padding: 6px 0;
+        }
+        .max-w-6xl.mx-auto.px-6.h-20 {
+          height: 64px !important;
+        }
+        .grid {
+          gap: 16px;
+        }
+      }
+      @media (max-width: 540px) {
+        .lb-prev {
+          left: 8px;
+        }
+        .lb-next {
+          right: 8px;
         }
       }
       @media (max-width: 375px) {
@@ -642,41 +844,48 @@
           <ul class="desktop-nav hidden md:flex items-center">
             <li>
               <a
-                href="index.html"
+                href="index.php"
                 class="nav-link text-sm font-medium text-muted transition-colors"
                 >Home</a
               >
             </li>
             <li>
               <a
-                href="about.html"
+                href="about.php"
                 class="nav-link text-sm font-medium text-muted transition-colors"
                 >About</a
               >
             </li>
             <li>
               <a
-                href="services.html"
-                class="nav-link active text-sm font-medium text-brown transition-colors"
+                href="services.php"
+                class="nav-link text-sm font-medium text-muted transition-colors"
                 >Workshops</a
               >
             </li>
             <li>
               <a
-                href="gallery.html"
+                href="events.php"
                 class="nav-link text-sm font-medium text-muted transition-colors"
+                >Events</a
+              >
+            </li>
+            <li>
+              <a
+                href="gallery.php"
+                class="nav-link active text-sm font-medium text-brown transition-colors"
                 >Gallery</a
               >
             </li>
             <li>
               <a
-                href="contact.html"
+                href="contact.php"
                 class="nav-link text-sm font-medium text-muted transition-colors"
                 >Contact</a
               >
             </li>
             <li class="ml-6">
-              <a href="contact.html" class="btn-primary text-sm">Book Now</a>
+              <a href="contact.php" class="btn-primary text-sm">Book Now</a>
             </li>
           </ul>
           <button
@@ -697,39 +906,42 @@
     <!-- MOBILE DRAWER -->
     <div class="mobile-drawer" id="mobileDrawer">
       <div class="drawer-header">
-        <div class="flex flex-col leading-tight">
-          <span
-            class="font-heading text-brown flex items-end gap-1 leading-none"
-          >
-            <span class="text-sm font-medium uppercase tracking-[0.2em]">
-              The
+          <div class="flex flex-col leading-tight">
+            <span
+              class="font-heading text-brown flex items-end gap-1 leading-none"
+            >
+              <span class="text-sm font-medium uppercase tracking-[0.2em]">
+                The
+              </span>
+
+              <span class="text-3xl font-semibold"> Clayo </span>
             </span>
 
-            <span class="text-3xl font-semibold"> Clayo </span>
-          </span>
-
-          <span
-            class="text-[11px] tracking-[0.35em] uppercase text-gold font-medium mt-1"
-          >
-            Pottery Studio
-          </span>
-        </div>
+            <span
+              class="text-[11px] tracking-[0.35em] uppercase text-gold font-medium mt-1"
+            >
+              Pottery Studio
+            </span>
+          </div>
         <button class="drawer-close" id="drawerClose">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
       <nav class="drawer-nav">
-        <a href="index.html"><i class="fa-solid fa-house"></i> Home</a>
-        <a href="about.html"><i class="fa-solid fa-circle-info"></i> About</a>
-        <a href="services.html" class="active"
+        <a href="index.php"><i class="fa-solid fa-house"></i> Home</a>
+        <a href="about.php"><i class="fa-solid fa-circle-info"></i> About</a>
+        <a href="services.php"
           ><i class="fa-solid fa-fire-flame-curved"></i> Workshops</a
         >
-        <a href="gallery.html"><i class="fa-solid fa-images"></i> Gallery</a>
-        <a href="contact.html"><i class="fa-solid fa-envelope"></i> Contact</a>
+        <a href="events.php"><i class="fa-regular fa-calendar"></i> Events</a>
+        <a href="gallery.php" class="active"
+          ><i class="fa-solid fa-images"></i> Gallery</a
+        >
+        <a href="contact.php"><i class="fa-solid fa-envelope"></i> Contact</a>
       </nav>
       <div class="drawer-footer">
         <a
-          href="contact.html"
+          href="contact.php"
           class="btn-primary"
           style="
             display: flex;
@@ -746,1172 +958,525 @@
     <section
       class="relative overflow-hidden"
       style="
-        min-height: 420px;
-        display: flex;
-        align-items: center;
-        background:
-          linear-gradient(
-            135deg,
-            rgba(28, 18, 12, 0.62) 0%,
-            rgba(52, 32, 20, 0.54) 45%,
-            rgba(184, 121, 58, 0.22) 100%
-          ),
-          url(&quot;https://lh3.googleusercontent.com/gps-cs-s/APNQkAGJktboAfwbGLOBWSxrFXPQeEJ1Pc3anKv2dkYDbs16CQ3yclvhMxWDmsfvIWsNeG2nSgU1O5hXb9ZowrhY0uR_SfzAsSm1Z32kHUp4i76GNkxuKrQTfORQc-LIXIKEYKXVAUEA34EjVrwk=s1360-w1360-h1020-rw&quot;);
-        background-size: cover;
-        background-position: center;
-        background-attachment: fixed;
+        background: linear-gradient(
+          135deg,
+          #faf6f0 0%,
+          #f5ede0 60%,
+          #ede0cc 100%
+        );
+        padding: 80px 0 60px;
       "
     >
-      <!-- Luxury Blur Overlay -->
       <div
         style="
           position: absolute;
-          inset: 0;
-          z-index: 0;
-          backdrop-filter: blur(2px);
-          background: radial-gradient(
-            circle at top right,
-            rgba(255, 255, 255, 0.06),
-            transparent 40%
-          );
+          top: -80px;
+          right: -80px;
+          width: 360px;
+          height: 360px;
+          border-radius: 50%;
+          background: rgba(184, 121, 58, 0.1);
+          pointer-events: none;
         "
       ></div>
-
-      <!-- Decorative Glow -->
       <div
         style="
           position: absolute;
-          width: 420px;
-          height: 420px;
-          border-radius: 999px;
-          background: rgba(232, 192, 128, 0.08);
-          filter: blur(90px);
-          top: -120px;
-          right: -100px;
-          z-index: 0;
+          bottom: -60px;
+          left: -60px;
+          width: 260px;
+          height: 260px;
+          border-radius: 50%;
+          background: rgba(196, 100, 58, 0.1);
+          pointer-events: none;
         "
       ></div>
 
-      <div
-        style="
-          position: absolute;
-          width: 320px;
-          height: 320px;
-          border-radius: 999px;
-          background: rgba(255, 255, 255, 0.04);
-          filter: blur(80px);
-          bottom: -120px;
-          left: -80px;
-          z-index: 0;
-        "
-      ></div>
+      <div class="max-w-6xl mx-auto px-6 relative z-10">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+          <!-- LEFT: Text -->
+          <div class="reveal-left text-left">
+            <span class="section-tag"
+              ><i class="fa-solid fa-images mr-1"></i> Our Creations</span
+            >
+            <h1
+              class="font-heading font-bold leading-tight mt-3 mb-5"
+              style="font-size: clamp(2.4rem, 5vw, 3.8rem); color: #2c1f14"
+            >
+              Our
+              <span class="font-heading" style="color: #b8793a">Gallery</span>
+              of<br />Handcrafted Art
+            </h1>
+            <p
+              class="text-lg leading-relaxed mb-8 max-w-lg"
+              style="color: #8a7060"
+            >
+              From raw earth to timeless ceramic art. Explore our collection of
+              handthrown mugs, bowls, vases, sculptures and the beautiful
+              workspace where every piece is born.
+            </p>
+            <div class="flex flex-wrap gap-4">
+              <a href="contact.php" class="btn-primary"
+                ><i class="fa-solid fa-hands-clapping mr-2"></i>Join a
+                Workshop</a
+              >
+              <a href="services.php" class="btn-outline">View Workshops</a>
+            </div>
+            <!-- Trust badges -->
+            <div class="flex flex-wrap gap-3 mt-8">
+              <span
+                style="
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 6px;
+                  background: #fff;
+                  border: 1px solid #e8d0a8;
+                  border-radius: 100px;
+                  padding: 6px 14px;
+                  font-size: 0.78rem;
+                  font-weight: 600;
+                  color: #5c3820;
+                "
+              >
+                <i class="fa-solid fa-circle-check" style="color: #b8793a"></i>
+                Handcrafted Pieces
+              </span>
+              <span
+                style="
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 6px;
+                  background: #fff;
+                  border: 1px solid #e8d0a8;
+                  border-radius: 100px;
+                  padding: 6px 14px;
+                  font-size: 0.78rem;
+                  font-weight: 600;
+                  color: #5c3820;
+                "
+              >
+                <i class="fa-solid fa-star" style="color: #b8793a"></i> 4.9
+                Rated Studio
+              </span>
+              <span
+                style="
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 6px;
+                  background: #fff;
+                  border: 1px solid #e8d0a8;
+                  border-radius: 100px;
+                  padding: 6px 14px;
+                  font-size: 0.78rem;
+                  font-weight: 600;
+                  color: #5c3820;
+                "
+              >
+                <i class="fa-solid fa-users" style="color: #b8793a"></i> 1000+
+                Students
+              </span>
+            </div>
+          </div>
 
-      <!-- Content -->
-      <div
-        class="max-w-3xl mx-auto px-6 text-center relative z-10 reveal"
-        style="padding-top: 110px; padding-bottom: 80px; width: 100%"
-      >
-        <!-- Tag -->
-        <span
-          style="
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.74rem;
-            font-weight: 600;
-            letter-spacing: 0.14em;
-            text-transform: uppercase;
-            color: #f3ddbb;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            backdrop-filter: blur(12px);
-            padding: 8px 18px;
-            border-radius: 999px;
-            margin-bottom: 18px;
-          "
-        >
-          <i class="fa-solid fa-circle-dot"></i>
-          What We Offer
-        </span>
-
-        <!-- Heading -->
-        <h1
-          class="font-heading font-bold leading-tight mt-3 mb-5"
-          style="
-            color: #fff;
-            font-size: clamp(2.6rem, 7vw, 5.5rem);
-            line-height: 1.05;
-            letter-spacing: -0.03em;
-          "
-        >
-          Our
-          <span
-            style="
-              color: #e8c080;
-              text-shadow: 0 0 18px rgba(232, 192, 128, 0.16);
-            "
-            class="font-heading"
+          <!-- RIGHT: Circular image desktop -->
+          <div
+            class="reveal-right hidden lg:flex justify-center items-center"
+            style="transition-delay: 0.15s"
           >
-            Workshops
-          </span>
-        </h1>
+            <div style="position: relative">
+              <div
+                style="
+                  width: 340px;
+                  height: 340px;
+                  border-radius: 50%;
+                  overflow: hidden;
+                  border: 6px solid #fff;
+                  box-shadow: 0 24px 80px rgba(80, 40, 20, 0.2);
+                  position: relative;
+                "
+              >
+                <img
+                  src="https://lh3.googleusercontent.com/p/AF1QipPYEnyKsB8AslgFyIN_RAP2kESwAbeE-_oYTgM3=s1360-w1360-h1020-rw"
+                  alt="Pottery Workshop"
+                  style="
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    object-position: center;
+                  "
+                />
+              </div>
+              <div
+                style="
+                  position: absolute;
+                  inset: -14px;
+                  border-radius: 50%;
+                  border: 2px dashed rgba(184, 121, 58, 0.35);
+                  pointer-events: none;
+                "
+              ></div>
+              <!-- Badge bottom-left -->
+              <div
+                style="
+                  position: absolute;
+                  bottom: 20px;
+                  left: -30px;
+                  background: #fff;
+                  border-radius: 16px;
+                  padding: 12px 18px;
+                  box-shadow: 0 8px 32px rgba(80, 40, 20, 0.16);
+                  display: flex;
+                  align-items: center;
+                  gap: 10px;
+                  min-width: 170px;
+                "
+              >
+                <div
+                  style="
+                    width: 36px;
+                    height: 36px;
+                    border-radius: 10px;
+                    background: linear-gradient(135deg, #b8793a, #8a5a1a);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-shrink: 0;
+                  "
+                >
+                  <i
+                    class="fa-solid fa-images"
+                    style="color: #fff; font-size: 0.85rem"
+                  ></i>
+                </div>
+                <div>
+                  <div
+                    style="
+                      font-family: &quot;Playfair Display&quot;, serif;
+                      font-size: 1.1rem;
+                      font-weight: 700;
+                      color: #5c3820;
+                      line-height: 1;
+                    "
+                  >
+                    1500+
+                  </div>
+                  <div
+                    style="font-size: 0.68rem; color: #8a7060; margin-top: 1px"
+                  >
+                    Pieces Created
+                  </div>
+                </div>
+              </div>
+              <!-- Badge top-right -->
+              <div
+                style="
+                  position: absolute;
+                  top: 20px;
+                  right: -24px;
+                  background: #fff;
+                  border-radius: 16px;
+                  padding: 10px 16px;
+                  box-shadow: 0 8px 32px rgba(80, 40, 20, 0.14);
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                "
+              >
+                <div
+                  style="
+                    width: 30px;
+                    height: 30px;
+                    border-radius: 8px;
+                    background: #fdf5e8;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-shrink: 0;
+                  "
+                >
+                  <i
+                    class="fa-solid fa-star"
+                    style="color: #b8793a; font-size: 0.8rem"
+                  ></i>
+                </div>
+                <div>
+                  <div
+                    style="font-size: 0.85rem; font-weight: 700; color: #5c3820"
+                  >
+                    4.9 / 5.0
+                  </div>
+                  <div style="font-size: 0.65rem; color: #8a7060">
+                    Student Rating
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-        <!-- Description -->
-        <p
-          style="
-            color: rgba(255, 255, 255, 0.88);
-            font-size: 1.03rem;
-            line-height: 1.85;
-            max-width: 620px;
-            margin: 0 auto 2.2rem;
-          "
-        >
-          Discover immersive pottery workshops in Amravati from beginner wheel
-          throwing to advanced ceramic artistry, handcrafted with creativity,
-          mindfulness, and expert guidance.
-        </p>
-
-        <!-- Buttons -->
-        <div class="flex flex-wrap gap-4 justify-center">
-          <!-- Primary -->
-          <a
-            href="contact.html"
-            class="btn-primary"
-            style="box-shadow: 0 12px 40px rgba(0, 0, 0, 0.22)"
+          <!-- Mobile Image -->
+          <div
+            class="reveal-right lg:hidden flex justify-center items-center mt-8"
+            style="transition-delay: 0.15s"
           >
-            <i class="fa-solid fa-hands-clapping mr-2"></i>
-            Enroll Now
-          </a>
-
-          <!-- Secondary -->
-          <a
-            href="#beginner-workshops"
-            style="
-              display: inline-flex;
-              align-items: center;
-              justify-content: center;
-              border: 1.5px solid rgba(255, 255, 255, 0.28);
-              background: rgba(255, 255, 255, 0.06);
-              backdrop-filter: blur(10px);
-              color: #fff;
-              padding: 12px 30px;
-              border-radius: 100px;
-              font-size: 0.92rem;
-              font-weight: 500;
-              transition: all 0.3s ease;
-              text-decoration: none;
-            "
-            onmouseover="
-              this.style.background = 'rgba(255,255,255,0.14)';
-              this.style.transform = 'translateY(-2px)';
-            "
-            onmouseout="
-              this.style.background = 'rgba(255,255,255,0.06)';
-              this.style.transform = 'translateY(0px)';
-            "
-          >
-            Browse Workshops
-          </a>
+            <div style="position: relative; width: 100%; max-width: 320px">
+              <div
+                style="
+                  width: 100%;
+                  aspect-ratio: 1;
+                  border-radius: 50%;
+                  overflow: hidden;
+                  border: 5px solid #fff;
+                  box-shadow: 0 20px 60px rgba(80, 40, 20, 0.2);
+                  position: relative;
+                "
+              >
+                <img
+                  src="https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=700&q=85"
+                  alt="Pottery Workshop"
+                  style="
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    object-position: center;
+                  "
+                />
+              </div>
+              <div
+                style="
+                  position: absolute;
+                  inset: -12px;
+                  border-radius: 50%;
+                  border: 2px dashed rgba(184, 121, 58, 0.35);
+                  pointer-events: none;
+                "
+              ></div>
+              <div
+                style="
+                  position: absolute;
+                  bottom: 15px;
+                  left: -15px;
+                  background: #fff;
+                  border-radius: 14px;
+                  padding: 10px 14px;
+                  box-shadow: 0 6px 24px rgba(80, 40, 20, 0.16);
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                  min-width: 140px;
+                "
+              >
+                <div
+                  style="
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 8px;
+                    background: linear-gradient(135deg, #b8793a, #8a5a1a);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-shrink: 0;
+                  "
+                >
+                  <i
+                    class="fa-solid fa-images"
+                    style="color: #fff; font-size: 0.75rem"
+                  ></i>
+                </div>
+                <div>
+                  <div
+                    style="
+                      font-family: &quot;Playfair Display&quot;, serif;
+                      font-size: 0.95rem;
+                      font-weight: 700;
+                      color: #5c3820;
+                      line-height: 1;
+                    "
+                  >
+                    500+
+                  </div>
+                  <div
+                    style="font-size: 0.6rem; color: #8a7060; margin-top: 1px"
+                  >
+                    Pieces
+                  </div>
+                </div>
+              </div>
+              <div
+                style="
+                  position: absolute;
+                  top: 15px;
+                  right: -15px;
+                  background: #fff;
+                  border-radius: 14px;
+                  padding: 8px 12px;
+                  box-shadow: 0 6px 24px rgba(80, 40, 20, 0.14);
+                  display: flex;
+                  align-items: center;
+                  gap: 6px;
+                "
+              >
+                <div
+                  style="
+                    width: 26px;
+                    height: 26px;
+                    border-radius: 6px;
+                    background: #fdf5e8;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-shrink: 0;
+                  "
+                >
+                  <i
+                    class="fa-solid fa-star"
+                    style="color: #b8793a; font-size: 0.7rem"
+                  ></i>
+                </div>
+                <div>
+                  <div
+                    style="font-size: 0.75rem; font-weight: 700; color: #5c3820"
+                  >
+                    4.9/5
+                  </div>
+                  <div style="font-size: 0.58rem; color: #8a7060">Rating</div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-
-      <!-- Mobile Optimization -->
-      <style>
-        @media (max-width: 768px) {
-          section {
-            background-attachment: scroll !important;
-          }
-        }
-      </style>
     </section>
 
-    <!-- WORKSHOPS LIST -->
-<section
-  class="py-24 relative overflow-hidden"
-  style="
-    background:
-      linear-gradient(
-        180deg,
-        #fffdf9 0%,
-        #f8f1e8 100%
-      );
-  "
->
-  <!-- Premium Background Glow -->
-  <div
-    style="
-      position:absolute;
-      top:-200px;
-      right:-120px;
-      width:500px;
-      height:500px;
-      border-radius:999px;
-      background:rgba(232,192,128,0.10);
-      filter:blur(120px);
-      pointer-events:none;
-    "
-  ></div>
-
-  <div
-    style="
-      position:absolute;
-      bottom:-200px;
-      left:-120px;
-      width:450px;
-      height:450px;
-      border-radius:999px;
-      background:rgba(184,147,90,0.08);
-      filter:blur(120px);
-      pointer-events:none;
-    "
-  ></div>
-
-  <div class="max-w-5xl mx-auto px-6 relative z-10">
-
-    <!-- ===================================== -->
-    <!-- CATEGORY 1 -->
-    <!-- ===================================== -->
-
-    <div class="mb-24" id="beginner-workshops">
-
-      <!-- Heading -->
-      <div
-        class="cat-divider reveal relative"
-        style="margin-bottom: 42px"
-      >
-        <h2
-          class="font-heading"
-          style="
-            font-size: clamp(2rem, 3vw, 3rem);
-            color: #5c3820;
-            letter-spacing: -0.03em;
-            position: relative;
-            display: inline-block;
-          "
-        >
-          Beginner Workshops
-
-          <span
-            style="
-              position:absolute;
-              left:0;
-              bottom:-10px;
-              width:72%;
-              height:3px;
-              border-radius:999px;
-              background:
-                linear-gradient(
-                  90deg,
-                  #c8a060,
-                  transparent
-                );
-            "
-          ></span>
-        </h2>
-      </div>
-
-      <!-- Cards -->
-      <div class="flex flex-col gap-7">
-
-        <!-- CARD 1 -->
-        <div
-          class="reveal srv-detail flex items-start gap-6 relative overflow-hidden"
-          style="
-            background: rgba(255,255,255,0.74);
-            backdrop-filter: blur(18px);
-            border: 1px solid rgba(184,147,90,0.14);
-            border-radius: 30px;
-            padding: 28px;
-            box-shadow:
-              0 10px 40px rgba(0,0,0,0.04),
-              0 2px 10px rgba(184,147,90,0.06);
-            transition:
-              transform 0.45s ease,
-              box-shadow 0.45s ease,
-              border-color 0.45s ease;
-          "
-          onmouseover="
-            this.style.transform='translateY(-8px)';
-            this.style.boxShadow='0 30px 70px rgba(0,0,0,0.08)';
-            this.style.borderColor='rgba(184,147,90,0.28)';
-          "
-          onmouseout="
-            this.style.transform='translateY(0px)';
-            this.style.boxShadow='0 10px 40px rgba(0,0,0,0.04)';
-            this.style.borderColor='rgba(184,147,90,0.14)';
-          "
-        >
-          <!-- Glow -->
-          <div
-            style="
-              position:absolute;
-              top:-80px;
-              right:-80px;
-              width:220px;
-              height:220px;
-              border-radius:999px;
-              background:rgba(232,192,128,0.10);
-              filter:blur(70px);
-              pointer-events:none;
-            "
-          ></div>
-
-          <!-- Image -->
-          <img
-            src="https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=200&q=90"
-            alt="Wheel Throwing"
-            loading="lazy"
-            style="
-              width:185px;
-              height:185px;
-              object-fit:cover;
-              border-radius:24px;
-              flex-shrink:0;
-              box-shadow:
-                0 18px 40px rgba(0,0,0,0.12);
-              transition:
-                transform 0.5s ease,
-                filter 0.5s ease;
-            "
-            onmouseover="
-              this.style.transform='scale(1.05)';
-              this.style.filter='brightness(1.03)';
-            "
-            onmouseout="
-              this.style.transform='scale(1)';
-              this.style.filter='brightness(1)';
-            "
-          />
-
-          <!-- Content -->
-          <div class="flex-1 min-w-0 relative z-10">
-
-            <h3
-              class="font-heading text-xl font-semibold mb-3"
-              style="color:#5c3820"
-            >
-              Intro to Wheel Throwing
-            </h3>
-
-            <p
-              class="text-sm leading-relaxed mb-4"
-              style="
-                color:#8a7060;
-                line-height:1.9;
-              "
-            >
-              The perfect first step into pottery. Learn to center clay on
-              the wheel, pull walls, and shape your very first bowl or mug.
-              Our instructors guide you every step of the way — no
-              experience needed, just curiosity and willingness to get your
-              hands dirty.
-            </p>
-
-            <!-- Badges -->
-            <div class="flex flex-wrap gap-2 mb-5">
-
-              <span class="time-badge">
-                <i class="fa-regular fa-clock mr-1"></i>
-                2 hrs / session
-              </span>
-
-              <span class="price-badge">
-                <i class="fa-solid fa-indian-rupee-sign mr-1"></i>
-                Starting ₹800/session
-              </span>
-
-              <span
-                class="text-xs bg-green-50 text-green-700 px-3 py-1 rounded-full border border-green-100"
-              >
-                No Experience Needed
-              </span>
-            </div>
-
-            <!-- Button -->
-            <a
-              href="contact.html"
-              style="
-                display:inline-flex;
-                align-items:center;
-                justify-content:center;
-                gap:8px;
-                background:
-                  linear-gradient(
-                    135deg,
-                    #c8a060,
-                    #b07a42
-                  );
-                color:white;
-                padding:13px 24px;
-                border-radius:999px;
-                font-size:0.88rem;
-                font-weight:600;
-                text-decoration:none;
-                box-shadow:
-                  0 10px 25px rgba(176,122,66,0.22);
-                transition:all 0.35s ease;
-              "
-              onmouseover="
-                this.style.transform='translateY(-3px)';
-                this.style.boxShadow='0 18px 40px rgba(176,122,66,0.28)';
-              "
-              onmouseout="
-                this.style.transform='translateY(0px)';
-                this.style.boxShadow='0 10px 25px rgba(176,122,66,0.22)';
-              "
-            >
-              Enroll
-              <i class="fa-solid fa-arrow-right text-xs"></i>
-            </a>
-          </div>
-        </div>
-
-        <!-- CARD 2 -->
-        <div
-          class="reveal srv-detail flex items-start gap-6 relative overflow-hidden"
-          style="
-            background: rgba(255,255,255,0.74);
-            backdrop-filter: blur(18px);
-            border: 1px solid rgba(184,147,90,0.14);
-            border-radius: 30px;
-            padding: 28px;
-            box-shadow:
-              0 10px 40px rgba(0,0,0,0.04),
-              0 2px 10px rgba(184,147,90,0.06);
-            transition:
-              transform 0.45s ease,
-              box-shadow 0.45s ease,
-              border-color 0.45s ease;
-          "
-        >
-          <div
-            style="
-              position:absolute;
-              top:-80px;
-              right:-80px;
-              width:220px;
-              height:220px;
-              border-radius:999px;
-              background:rgba(232,192,128,0.10);
-              filter:blur(70px);
-              pointer-events:none;
-            "
-          ></div>
-
-          <img
-            src="https://images.unsplash.com/photo-1528396518501-b53b655eb9b3?w=200&q=90"
-            alt="Hand Building"
-            loading="lazy"
-            style="
-              width:185px;
-              height:185px;
-              object-fit:cover;
-              border-radius:24px;
-              flex-shrink:0;
-              box-shadow:
-                0 18px 40px rgba(0,0,0,0.12);
-            "
-          />
-
-          <div class="flex-1 min-w-0 relative z-10">
-
-            <h3
-              class="font-heading text-xl font-semibold mb-3"
-              style="color:#5c3820"
-            >
-              Hand Building Basics
-            </h3>
-
-            <p
-              class="text-sm leading-relaxed mb-4"
-              style="
-                color:#8a7060;
-                line-height:1.9;
-              "
-            >
-              Build beautiful ceramic pieces without a wheel using coil,
-              slab, and pinch techniques. Create plates, trays, planters,
-              and decorative items entirely by hand.
-            </p>
-
-            <div class="flex flex-wrap gap-2 mb-5">
-
-              <span class="time-badge">
-                <i class="fa-regular fa-clock mr-1"></i>
-                2 hrs / session
-              </span>
-
-              <span class="price-badge">
-                <i class="fa-solid fa-indian-rupee-sign mr-1"></i>
-                Starting ₹700/session
-              </span>
-
-              <span
-                class="text-xs bg-amber-50 text-amber-700 px-3 py-1 rounded-full border border-amber-100"
-              >
-                All Ages Welcome
-              </span>
-            </div>
-
-            <a
-              href="contact.html"
-              style="
-                display:inline-flex;
-                align-items:center;
-                justify-content:center;
-                gap:8px;
-                background:
-                  linear-gradient(
-                    135deg,
-                    #c8a060,
-                    #b07a42
-                  );
-                color:white;
-                padding:13px 24px;
-                border-radius:999px;
-                font-size:0.88rem;
-                font-weight:600;
-                text-decoration:none;
-              "
-            >
-              Enroll
-              <i class="fa-solid fa-arrow-right text-xs"></i>
-            </a>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- ===================================== -->
-    <!-- CATEGORY 2 -->
-    <!-- ===================================== -->
-
-    <div class="mb-24" id="advanced-workshops">
-
-      <div
-        class="cat-divider reveal relative"
-        style="margin-bottom: 42px"
-      >
-        <h2
-          class="font-heading"
-          style="
-            font-size: clamp(2rem, 3vw, 3rem);
-            color: #5c3820;
-            letter-spacing: -0.03em;
-            position: relative;
-            display: inline-block;
-          "
-        >
-          Intermediate & Advanced
-
-          <span
-            style="
-              position:absolute;
-              left:0;
-              bottom:-10px;
-              width:72%;
-              height:3px;
-              border-radius:999px;
-              background:
-                linear-gradient(
-                  90deg,
-                  #c8a060,
-                  transparent
-                );
-            "
-          ></span>
-        </h2>
-      </div>
-
-      <div class="flex flex-col gap-7">
-
-        <!-- Advanced Card -->
-        <div
-          class="reveal srv-detail flex items-start gap-6 relative overflow-hidden"
-          style="
-            background: rgba(255,255,255,0.74);
-            backdrop-filter: blur(18px);
-            border: 1px solid rgba(184,147,90,0.14);
-            border-radius: 30px;
-            padding: 28px;
-            box-shadow:
-              0 10px 40px rgba(0,0,0,0.04);
-          "
-        >
-          <div
-            style="
-              position:absolute;
-              top:-80px;
-              right:-80px;
-              width:220px;
-              height:220px;
-              border-radius:999px;
-              background:rgba(232,192,128,0.10);
-              filter:blur(70px);
-            "
-          ></div>
-
-          <img
-            src="https://images.unsplash.com/photo-1493932484895-752d1471eab5?w=200&q=90"
-            alt="Glazing"
-            loading="lazy"
-            style="
-              width:185px;
-              height:185px;
-              object-fit:cover;
-              border-radius:24px;
-              flex-shrink:0;
-              box-shadow:
-                0 18px 40px rgba(0,0,0,0.12);
-            "
-          />
-
-          <div class="flex-1 min-w-0 relative z-10">
-
-            <h3
-              class="font-heading text-xl font-semibold mb-3"
-              style="color:#5c3820"
-            >
-              Glazing & Kiln Firing Masterclass
-            </h3>
-
-            <p
-              class="text-sm leading-relaxed mb-4"
-              style="
-                color:#8a7060;
-                line-height:1.9;
-              "
-            >
-              Dive deep into the science and art of ceramic glazes. Learn to
-              mix, layer, and apply glazes using brush, dip, and pour
-              methods.
-            </p>
-
-            <div class="flex flex-wrap gap-2 mb-5">
-
-              <span class="time-badge">
-                <i class="fa-regular fa-clock mr-1"></i>
-                3 hrs / session
-              </span>
-
-              <span class="price-badge">
-                <i class="fa-solid fa-indian-rupee-sign mr-1"></i>
-                Starting ₹1,200/session
-              </span>
-
-              <span
-                class="text-xs bg-purple-50 text-purple-700 px-3 py-1 rounded-full border border-purple-100"
-              >
-                Kiln Access Included
-              </span>
-            </div>
-
-            <a
-              href="contact.html"
-              style="
-                display:inline-flex;
-                align-items:center;
-                justify-content:center;
-                gap:8px;
-                background:
-                  linear-gradient(
-                    135deg,
-                    #c8a060,
-                    #b07a42
-                  );
-                color:white;
-                padding:13px 24px;
-                border-radius:999px;
-                font-size:0.88rem;
-                font-weight:600;
-                text-decoration:none;
-              "
-            >
-              Enroll
-              <i class="fa-solid fa-arrow-right text-xs"></i>
-            </a>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- ===================================== -->
-    <!-- CATEGORY 3 -->
-    <!-- ===================================== -->
-
-    <div class="mb-24" id="special-programs">
-
-      <div
-        class="cat-divider reveal relative"
-        style="margin-bottom: 42px"
-      >
-        <h2
-          class="font-heading"
-          style="
-            font-size: clamp(2rem, 3vw, 3rem);
-            color: #5c3820;
-            letter-spacing: -0.03em;
-            position: relative;
-            display: inline-block;
-          "
-        >
-          Special Programs
-
-          <span
-            style="
-              position:absolute;
-              left:0;
-              bottom:-10px;
-              width:72%;
-              height:3px;
-              border-radius:999px;
-              background:
-                linear-gradient(
-                  90deg,
-                  #c8a060,
-                  transparent
-                );
-            "
-          ></span>
-        </h2>
-      </div>
-
-      <div class="flex flex-col gap-7">
-
-        <!-- Kids -->
-        <div
-          class="reveal srv-detail flex items-start gap-6 relative overflow-hidden"
-          style="
-            background: rgba(255,255,255,0.74);
-            backdrop-filter: blur(18px);
-            border: 1px solid rgba(184,147,90,0.14);
-            border-radius: 30px;
-            padding: 28px;
-            box-shadow:
-              0 10px 40px rgba(0,0,0,0.04);
-          "
-        >
-          <div
-            style="
-              position:absolute;
-              top:-80px;
-              right:-80px;
-              width:220px;
-              height:220px;
-              border-radius:999px;
-              background:rgba(232,192,128,0.10);
-              filter:blur(70px);
-            "
-          ></div>
-
-          <img
-            src="https://images.unsplash.com/photo-1509440159596-0249088772ff?w=200&q=90"
-            alt="Kids Pottery"
-            loading="lazy"
-            style="
-              width:185px;
-              height:185px;
-              object-fit:cover;
-              border-radius:24px;
-              flex-shrink:0;
-              box-shadow:
-                0 18px 40px rgba(0,0,0,0.12);
-            "
-          />
-
-          <div class="flex-1 min-w-0 relative z-10">
-
-            <h3
-              class="font-heading text-xl font-semibold mb-3"
-              style="color:#5c3820"
-            >
-              Kids Pottery (Ages 6–14)
-            </h3>
-
-            <p
-              class="text-sm leading-relaxed mb-4"
-              style="
-                color:#8a7060;
-                line-height:1.9;
-              "
-            >
-              A fun, safe, and supervised pottery class designed specially
-              for children. Kids get to play, create, and bring home their
-              own fired ceramic piece.
-            </p>
-
-            <div class="flex flex-wrap gap-2 mb-5">
-
-              <span class="time-badge">
-                <i class="fa-regular fa-clock mr-1"></i>
-                1.5 hrs / session
-              </span>
-
-              <span class="price-badge">
-                <i class="fa-solid fa-indian-rupee-sign mr-1"></i>
-                ₹500 per child
-              </span>
-
-              <span
-                class="text-xs bg-green-50 text-green-700 px-3 py-1 rounded-full border border-green-100"
-              >
-                Ages 6–14
-              </span>
-            </div>
-
-            <a
-              href="contact.html"
-              style="
-                display:inline-flex;
-                align-items:center;
-                justify-content:center;
-                gap:8px;
-                background:
-                  linear-gradient(
-                    135deg,
-                    #c8a060,
-                    #b07a42
-                  );
-                color:white;
-                padding:13px 24px;
-                border-radius:999px;
-                font-size:0.88rem;
-                font-weight:600;
-                text-decoration:none;
-              "
-            >
-              Enroll
-              <i class="fa-solid fa-arrow-right text-xs"></i>
-            </a>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- ===================================== -->
-    <!-- CATEGORY 4 -->
-    <!-- ===================================== -->
-
-    <div class="mb-12" id="monthly-courses">
-
-      <div
-        class="cat-divider reveal relative"
-        style="margin-bottom: 42px"
-      >
-        <h2
-          class="font-heading"
-          style="
-            font-size: clamp(2rem, 3vw, 3rem);
-            color: #5c3820;
-            letter-spacing: -0.03em;
-            position: relative;
-            display: inline-block;
-          "
-        >
-          Monthly Membership Courses
-
-          <span
-            style="
-              position:absolute;
-              left:0;
-              bottom:-10px;
-              width:72%;
-              height:3px;
-              border-radius:999px;
-              background:
-                linear-gradient(
-                  90deg,
-                  #c8a060,
-                  transparent
-                );
-            "
-          ></span>
-        </h2>
-      </div>
-
-      <div class="flex flex-col gap-7">
-
-        <!-- Membership -->
-        <div
-          class="reveal srv-detail flex items-start gap-6 relative overflow-hidden"
-          style="
-            background: rgba(255,255,255,0.74);
-            backdrop-filter: blur(18px);
-            border: 1px solid rgba(184,147,90,0.14);
-            border-radius: 30px;
-            padding: 28px;
-            box-shadow:
-              0 10px 40px rgba(0,0,0,0.04);
-          "
-        >
-          <div
-            style="
-              position:absolute;
-              top:-80px;
-              right:-80px;
-              width:220px;
-              height:220px;
-              border-radius:999px;
-              background:rgba(232,192,128,0.10);
-              filter:blur(70px);
-            "
-          ></div>
-
-          <img
-            src="https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=200&q=90"
-            alt="Membership"
-            loading="lazy"
-            style="
-              width:185px;
-              height:185px;
-              object-fit:cover;
-              border-radius:24px;
-              flex-shrink:0;
-              box-shadow:
-                0 18px 40px rgba(0,0,0,0.12);
-            "
-          />
-
-          <div class="flex-1 min-w-0 relative z-10">
-
-            <h3
-              class="font-heading text-xl font-semibold mb-3"
-              style="color:#5c3820"
-            >
-              Studio Membership (8 Sessions/Month)
-            </h3>
-
-            <p
-              class="text-sm leading-relaxed mb-4"
-              style="
-                color:#8a7060;
-                line-height:1.9;
-              "
-            >
-              Our most popular plan. Get 8 open-studio sessions per month
-              with full access to wheels, tools, clay, and kiln firings.
-            </p>
-
-            <div class="flex flex-wrap gap-2 mb-5">
-
-              <span class="time-badge">
-                <i class="fa-regular fa-clock mr-1"></i>
-                8 sessions / month
-              </span>
-
-              <span class="price-badge">
-                <i class="fa-solid fa-indian-rupee-sign mr-1"></i>
-                ₹3,500 / month
-              </span>
-
-              <span
-                class="text-xs bg-green-50 text-green-700 px-3 py-1 rounded-full border border-green-100"
-              >
-                Best Value
-              </span>
-            </div>
-
-            <a
-              href="contact.html"
-              style="
-                display:inline-flex;
-                align-items:center;
-                justify-content:center;
-                gap:8px;
-                background:
-                  linear-gradient(
-                    135deg,
-                    #c8a060,
-                    #b07a42
-                  );
-                color:white;
-                padding:13px 24px;
-                border-radius:999px;
-                font-size:0.88rem;
-                font-weight:600;
-                text-decoration:none;
-              "
-            >
-              Join
-              <i class="fa-solid fa-arrow-right text-xs"></i>
-            </a>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </div>
-
-  <!-- Mobile Responsive -->
-  <style>
-    @media (max-width: 768px) {
-      .srv-detail {
-        flex-direction: column !important;
-      }
-
-      .srv-detail img {
-        width: 100% !important;
-        height: 240px !important;
-      }
-    }
-  </style>
-</section>
-
-    <!-- WHY THE CLAYO -->
-    <section class="py-20 overflow-hidden" style="background: #faf6f0">
+    <!-- GALLERY SECTION -->
+    <section class="py-16 bg-white">
       <div class="max-w-6xl mx-auto px-6">
-        <div class="text-center mb-14 reveal">
-          <span class="section-tag">Why Choose Us</span>
-          <h2
-            class="font-heading text-4xl font-bold mt-3 mb-4"
-            style="color: #2c1f14"
-          >
-            The Clayo
-            <span class="font-heading" style="color: #b8793a">Difference</span>
-          </h2>
-          <p style="color: #8a7060" class="max-w-lg mx-auto">
-            What sets our studio apart every single session, every piece of
-            clay.
+        <!-- Filter Buttons -->
+        <div class="flex flex-wrap gap-3 justify-center mb-12 reveal">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <?php foreach ($galleryCategoryLabels as $slug => $label): ?>
+          <button class="filter-btn" data-filter="<?= clayo_e($slug) ?>"><?= clayo_e($label) ?></button>
+          <?php endforeach; ?>
+        </div>
+
+        <!-- Masonry Grid (managed in Admin → Gallery) -->
+        <div class="gallery-grid" id="galleryGrid">
+          <?php if (empty($galleryImages)): ?>
+          <p style="grid-column:1/-1;text-align:center;color:#8a7060;padding:48px 0;">
+            No gallery images yet. Please check back soon.
           </p>
+          <?php else: ?>
+          <?php foreach ($galleryImages as $gi => $g): ?>
+          <div
+            class="gallery-item reveal"
+            data-category="<?= clayo_e($g['slug']) ?>"
+            style="transition-delay: <?= number_format(($gi % 3) * 0.06, 2) ?>s"
+          >
+            <div
+              class="g-card"
+              data-title="<?= clayo_e($g['title']) ?>"
+              data-category="<?= clayo_e($g['categoryLabel']) ?>"
+              data-src="<?= clayo_e($g['src']) ?>"
+            >
+              <img
+                src="<?= clayo_e($g['src']) ?>"
+                alt="<?= clayo_e($g['title']) ?>"
+                loading="lazy"
+              />
+              <div class="g-overlay">
+                <div class="g-overlay-content">
+                  <div class="text-sm font-semibold"><?= clayo_e($g['title']) ?></div>
+                  <div class="text-xs opacity-70 mt-1">
+                    <i class="fa-solid fa-magnifying-glass mr-1"></i>View Photo
+                  </div>
+                </div>
+              </div>
+              <div class="g-tag"><?= clayo_e($g['categoryLabel']) ?></div>
+            </div>
+          </div>
+          <?php endforeach; ?>
+          <?php endif; ?>
         </div>
-        <div class="grid md:grid-cols-3 gap-8">
-          <div
-            class="reveal why-img-card card-hover border border-amber-100 bg-white rounded-2xl overflow-hidden"
-            style="transition-delay: 0.05s"
-          >
-            <div style="overflow: hidden; height: 200px">
-              <img
-                src="https://lh3.googleusercontent.com/gps-cs-s/APNQkAGSyVRnUK4tdKg906MBv6p51UYyMESD4zPSs4vu3imB3NnHP7eLoiclLrudONMwDnYevUPC8lanpKVJQ4Av6QATzV4Y0JK_giJzdT-MmsvdKMcKidBBlwAFW5GjDzsaf9tzwRNuKlrlXoeI=s1360-w1360-h1020-rw"
-                alt="Expert Instructors"
-                style="
-                  width: 100%;
-                  height: 100%;
-                  object-fit: cover;
-                  transition: transform 0.5s ease;
-                "
-              />
-            </div>
-            <div class="p-7">
-              <h4
-                class="font-heading text-xl font-semibold mb-3"
-                style="color: #5c3820"
-              >
-                Expert Instructors
-              </h4>
-              <p class="text-sm leading-relaxed" style="color: #8a7060">
-                Our instructors are practising ceramic artists with over 10
-                years of experience. Each session is guided, encouraging, and
-                crafted to help you truly learn — not just follow instructions.
-              </p>
-            </div>
-          </div>
+      </div>
+    </section>
 
-          <div
-            class="reveal why-img-card card-hover border border-amber-100 bg-white rounded-2xl overflow-hidden"
-            style="transition-delay: 0.12s"
-          >
-            <div style="overflow: hidden; height: 200px">
-              <img
-                src="https://lh3.googleusercontent.com/p/AF1QipPMKTbob9-fvJ4X8FvkRdFVR4nWsmtCS0S4WonR=s1360-w1360-h1020-rw"
-                alt="Professional Studio"
-                style="
-                  width: 100%;
-                  height: 100%;
-                  object-fit: cover;
-                  transition: transform 0.5s ease;
-                "
-              />
-            </div>
-            <div class="p-7">
-              <h4
-                class="font-heading text-xl font-semibold mb-3"
-                style="color: #5c3820"
-              >
-                Professional Studio &amp; Kiln
-              </h4>
-              <p class="text-sm leading-relaxed" style="color: #8a7060">
-                Our studio is equipped with Japanese pottery wheels, a
-                professional electric kiln, full clay body options, and premium
-                glazes. Everything you need to create real, lasting ceramic work
-                — right here in Amravati.
-              </p>
-            </div>
-          </div>
 
-          <div
-            class="reveal why-img-card card-hover border border-amber-100 bg-white rounded-2xl overflow-hidden"
-            style="transition-delay: 0.2s"
-          >
-            <div style="overflow: hidden; height: 200px">
-              <img
-                src="https://lh3.googleusercontent.com/p/AF1QipN9FxAr0aFLkIQL9-VhMeCjgsoB5CLy32EDXTN4=s1360-w1360-h1020-rw"
-                alt="Take Home Your Work"
-                style="
-                  width: 100%;
-                  height: 100%;
-                  object-fit: cover;
-                  transition: transform 0.5s ease;
-                "
-              />
-            </div>
-            <div class="p-7">
-
-              <h4
-                class="font-heading text-xl font-semibold mb-3"
-                style="color: #5c3820"
-              >
-                You Take Your Art Home
-              </h4>
-              <p class="text-sm leading-relaxed" style="color: #8a7060">
-                Every piece you create is fully fired and glazed by our team. We
-                handle the kiln runs, and your finished ceramic is ready to
-                collect — a real, usable piece of art made entirely by you, to
-                keep forever.
-              </p>
-            </div>
-          </div>
+    <!-- LIGHTBOX -->
+    <div class="lightbox" id="lightbox">
+      <button class="lb-close" id="lbClose">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <button class="lb-prev" id="lbPrev">
+        <i class="fa-solid fa-chevron-left"></i>
+      </button>
+      <button class="lb-next" id="lbNext">
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+      <div class="lb-inner">
+        <img id="lbImg" src="" alt="" class="lb-img" />
+        <div class="lb-caption">
+          <h4 id="lbTitle"></h4>
+          <p id="lbCategory"></p>
         </div>
+      </div>
+    </div>
+
+    <!-- COUNT BAND -->
+    <section class="py-14 text-center reveal" style="background: #5c3820">
+      <div class="max-w-4xl mx-auto px-6">
+        <p class="font-heading text-2xl text-white mb-2">
+          Join <span style="color: #b8793a">1,200+</span> students who've shaped
+          their own pottery at The Clayo
+        </p>
+        <p class="mb-8" style="color: rgba(255, 255, 255, 0.6)">
+          Every piece in this gallery was crafted with love, clay, and
+          creativity — right here in Amravati.
+        </p>
+        <a
+          href="contact.php"
+          class="px-8 py-4 rounded-full font-semibold inline-block transition-colors"
+          style="background: #b8793a; color: #fff"
+          onmouseover="this.style.background = '#9a6530'"
+          onmouseout="this.style.background = '#b8793a'"
+        >
+          <i class="fa-solid fa-hands-clapping mr-2"></i>Start Your Pottery
+          Journey
+        </a>
       </div>
     </section>
 
     <!-- CTA -->
     <section class="cta-section py-24">
       <div class="max-w-4xl mx-auto px-6 text-center relative z-10 reveal">
-        <span class="section-tag">Not Sure Where to Start?</span>
+        <span class="section-tag">Enroll Today</span>
         <h2
           class="font-heading text-4xl lg:text-5xl font-bold mt-4 mb-5 leading-tight"
           style="color: #2c1f14"
         >
-          We'll Help You
-          <span class="font-heading" style="color: #b8793a"
-            >Find the Right Workshop!</span
-          >
+          Your Creation
+          <span class="font-heading" style="color: #b8793a">Starts Here</span>
         </h2>
         <p
           class="text-lg mb-8 max-w-2xl mx-auto leading-relaxed"
           style="color: #8a7060"
         >
-          Not sure which class is right for you? Book a free 15-minute chat with
-          our instructors. We'll understand your goals, availability, and skill
-          level — and recommend the perfect starting point.
+          Ready to see your pottery in our gallery? Enroll in a beginner or
+          advanced workshop and craft your own ceramic masterpiece under expert
+          guidance.
         </p>
         <div class="flex flex-wrap gap-4 justify-center">
-          <a href="contact.html" class="btn-primary text-base px-8 py-4"
+          <a href="contact.php" class="btn-primary text-base px-8 py-4"
             ><i class="fa-solid fa-hands-clapping mr-2"></i>Enroll in a
             Workshop</a
           >
-          <a href="tel:+917276000000" class="btn-outline text-base px-8 py-4"
-            ><i class="fa-solid fa-phone mr-2"></i>Call Us Now</a
+          <a href="services.php" class="btn-outline text-base px-8 py-4"
+            >Browse Workshops</a
           >
         </div>
       </div>
     </section>
 
     <!-- FOOTER -->
-    <footer style="background: #1a0e06">
+      <footer style="background: #1a0e06">
       <div class="max-w-6xl mx-auto px-6 pt-14 pb-10">
         <div
           class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 pb-10 footer-grid"
@@ -2094,7 +1659,7 @@
             >
               <li>
                 <a
-                  href="index.html"
+                  href="index.php"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -2112,7 +1677,7 @@
               </li>
               <li>
                 <a
-                  href="about.html"
+                  href="about.php"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -2130,7 +1695,7 @@
               </li>
               <li>
                 <a
-                  href="workshops.html"
+                  href="services.php"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -2148,7 +1713,7 @@
               </li>
               <li>
                 <a
-                  href="gallery.html"
+                  href="gallery.php"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -2166,7 +1731,7 @@
               </li>
               <li>
                 <a
-                  href="contact.html"
+                  href="contact.php"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -2184,7 +1749,7 @@
               </li>
               <li>
                 <a
-                  href="contact.html#bookingForm"
+                  href="contact.php#bookingForm"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -2229,7 +1794,7 @@
             >
               <li>
                 <a
-                  href="workshops.html"
+                  href="services.php"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -2247,7 +1812,7 @@
               </li>
               <li>
                 <a
-                  href="workshops.html"
+                  href="services.php"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -2265,7 +1830,7 @@
               </li>
               <li>
                 <a
-                  href="workshops.html"
+                  href="services.php"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -2283,7 +1848,7 @@
               </li>
               <li>
                 <a
-                  href="workshops.html"
+                  href="services.php"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -2301,7 +1866,7 @@
               </li>
               <li>
                 <a
-                  href="workshops.html"
+                  href="services.php"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -2319,7 +1884,7 @@
               </li>
               <li>
                 <a
-                  href="workshops.html"
+                  href="services.php"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -2571,27 +2136,32 @@
       </div>
     </footer>
 
+    <!-- WhatsApp Button -->
     <a href="https://wa.me/919724788561" target="_blank" class="whatsapp-btn"
       ><i class="fa-brands fa-whatsapp text-white text-2xl"></i
     ></a>
 
     <script>
+      // Header height offset
       function updateHeaderOffset() {
         const header = document.querySelector(".sticky-header");
-        if (header)
+        if (header) {
           document.body.style.setProperty(
             "--header-height",
             header.offsetHeight + "px",
           );
+        }
       }
       updateHeaderOffset();
       window.addEventListener("resize", updateHeaderOffset);
 
+      // Navbar scroll shadow
       const navbar = document.getElementById("navbar");
       window.addEventListener("scroll", () => {
         navbar.classList.toggle("navbar-scrolled", window.scrollY > 20);
       });
 
+      // Hamburger / Drawer
       const hamburger = document.getElementById("hamburger");
       const drawer = document.getElementById("mobileDrawer");
       const overlay = document.getElementById("drawerOverlay");
@@ -2617,6 +2187,111 @@
         .querySelectorAll("a")
         .forEach((a) => a.addEventListener("click", closeDrawer));
 
+      // Gallery Filter
+      const filterBtns = document.querySelectorAll(".filter-btn");
+      const galleryItems = document.querySelectorAll(".gallery-item");
+      filterBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          filterBtns.forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          const filter = btn.dataset.filter;
+          galleryItems.forEach((item) => {
+            if (filter === "all" || item.dataset.category === filter) {
+              item.style.display = "";
+              item.style.opacity = "0";
+              setTimeout(() => {
+                item.style.opacity = "1";
+                item.style.transition = "opacity 0.4s";
+              }, 10);
+            } else {
+              item.style.opacity = "0";
+              setTimeout(() => {
+                item.style.display = "none";
+              }, 350);
+            }
+          });
+        });
+      });
+
+      // Lightbox
+      const lightbox = document.getElementById("lightbox");
+      const lbImg = document.getElementById("lbImg");
+      const lbTitle = document.getElementById("lbTitle");
+      const lbCategory = document.getElementById("lbCategory");
+      const lbClose = document.getElementById("lbClose");
+      const lbPrev = document.getElementById("lbPrev");
+      const lbNext = document.getElementById("lbNext");
+      let allCards = [],
+        currentIdx = 0;
+
+      function buildCardList() {
+        allCards = Array.from(
+          document.querySelectorAll(
+            '.gallery-item:not([style*="display: none"]) .g-card',
+          ),
+        );
+      }
+      function openLightbox(idx) {
+        buildCardList();
+        currentIdx = idx;
+        const card = allCards[currentIdx];
+        if (!card) return;
+        lbImg.src = card.dataset.src;
+        lbImg.alt = card.dataset.title;
+        lbTitle.textContent = card.dataset.title;
+        lbCategory.textContent = card.dataset.category;
+        lightbox.classList.add("open");
+        document.body.style.overflow = "hidden";
+      }
+      function closeLightbox() {
+        lightbox.classList.remove("open");
+        document.body.style.overflow = "";
+        lbImg.src = "";
+      }
+      function showPrev() {
+        buildCardList();
+        currentIdx = (currentIdx - 1 + allCards.length) % allCards.length;
+        const c = allCards[currentIdx];
+        lbImg.src = c.dataset.src;
+        lbTitle.textContent = c.dataset.title;
+        lbCategory.textContent = c.dataset.category;
+      }
+      function showNext() {
+        buildCardList();
+        currentIdx = (currentIdx + 1) % allCards.length;
+        const c = allCards[currentIdx];
+        lbImg.src = c.dataset.src;
+        lbTitle.textContent = c.dataset.title;
+        lbCategory.textContent = c.dataset.category;
+      }
+
+      document.querySelectorAll(".g-card").forEach((card, i) => {
+        card.addEventListener("click", () => {
+          buildCardList();
+          const idx = allCards.indexOf(card);
+          openLightbox(idx >= 0 ? idx : 0);
+        });
+      });
+      lbClose.addEventListener("click", closeLightbox);
+      lbPrev.addEventListener("click", (e) => {
+        e.stopPropagation();
+        showPrev();
+      });
+      lbNext.addEventListener("click", (e) => {
+        e.stopPropagation();
+        showNext();
+      });
+      lightbox.addEventListener("click", (e) => {
+        if (e.target === lightbox) closeLightbox();
+      });
+      document.addEventListener("keydown", (e) => {
+        if (!lightbox.classList.contains("open")) return;
+        if (e.key === "Escape") closeLightbox();
+        if (e.key === "ArrowLeft") showPrev();
+        if (e.key === "ArrowRight") showNext();
+      });
+
+      // Scroll Reveal
       const revealObs = new IntersectionObserver(
         (entries) => {
           entries.forEach((e) => {
@@ -2626,21 +2301,12 @@
             }
           });
         },
-        { threshold: 0.08, rootMargin: "0px 0px -30px 0px" },
+        { threshold: 0.07, rootMargin: "0px 0px -20px 0px" },
       );
       document
         .querySelectorAll(".reveal, .reveal-left, .reveal-right, .reveal-scale")
         .forEach((el) => revealObs.observe(el));
-
-      document.querySelectorAll(".why-img-card").forEach((card) => {
-        const img = card.querySelector("img");
-        card.addEventListener("mouseenter", () => {
-          if (img) img.style.transform = "scale(1.06)";
-        });
-        card.addEventListener("mouseleave", () => {
-          if (img) img.style.transform = "scale(1)";
-        });
-      });
     </script>
+  <?php include __DIR__ . '/popup.php'; ?>
   </body>
 </html>

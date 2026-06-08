@@ -1,4 +1,4 @@
-<!doctype html>
+!<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -848,7 +848,7 @@
         <div
           class="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between"
         >
-          <a href="index.html" class="flex items-center gap-3 flex-shrink-0">
+          <a href="index.php" class="flex items-center gap-3 flex-shrink-0">
             <!-- <div
               class="w-9 h-9 rounded-full bg-gradient-to-br from-amber-700 to-amber-500 flex items-center justify-center"
             >
@@ -875,41 +875,48 @@
           <ul class="desktop-nav hidden md:flex items-center">
             <li>
               <a
-                href="index.html"
+                href="index.php"
                 class="nav-link active text-sm font-medium text-brown transition-colors"
                 >Home</a
               >
             </li>
             <li>
               <a
-                href="about.html"
+                href="about.php"
                 class="nav-link text-sm font-medium text-muted transition-colors"
                 >About</a
               >
             </li>
             <li>
               <a
-                href="services.html"
+                href="services.php"
                 class="nav-link text-sm font-medium text-muted transition-colors"
                 >Workshops</a
               >
             </li>
             <li>
               <a
-                href="gallery.html"
+                href="events.php"
+                class="nav-link text-sm font-medium text-muted transition-colors"
+                >Events</a
+              >
+            </li>
+            <li>
+              <a
+                href="gallery.php"
                 class="nav-link text-sm font-medium text-muted transition-colors"
                 >Gallery</a
               >
             </li>
             <li>
               <a
-                href="contact.html"
+                href="contact.php"
                 class="nav-link text-sm font-medium text-muted transition-colors"
                 >Contact</a
               >
             </li>
             <li class="ml-6">
-              <a href="contact.html" class="btn-primary text-sm">Book Now</a>
+              <a href="contact.php" class="btn-primary text-sm">Book Now</a>
             </li>
           </ul>
           <button
@@ -952,19 +959,20 @@
         </button>
       </div>
       <nav class="drawer-nav">
-        <a href="index.html" class="active"
+        <a href="index.php" class="active"
           ><i class="fa-solid fa-house"></i> Home</a
         >
-        <a href="about.html"><i class="fa-solid fa-circle-info"></i> About</a>
-        <a href="services.html"
+        <a href="about.php"><i class="fa-solid fa-circle-info"></i> About</a>
+        <a href="services.php"
           ><i class="fa-solid fa-fire-flame-curved"></i> Workshops</a
         >
-        <a href="gallery.html"><i class="fa-solid fa-images"></i> Gallery</a>
-        <a href="contact.html"><i class="fa-solid fa-envelope"></i> Contact</a>
+        <a href="events.php"><i class="fa-regular fa-calendar"></i> Events</a>
+        <a href="gallery.php"><i class="fa-solid fa-images"></i> Gallery</a>
+        <a href="contact.php"><i class="fa-solid fa-envelope"></i> Contact</a>
       </nav>
       <div class="drawer-footer">
         <a
-          href="contact.html"
+          href="contact.php"
           class="btn-primary"
           style="
             display: flex;
@@ -1007,10 +1015,10 @@
           <div
             class="flex flex-wrap gap-4 mb-12 justify-center md:justify-start"
           >
-            <a href="contact.html" class="btn-primary">
+            <a href="contact.php" class="btn-primary">
               <i class="fa-regular fa-calendar-check mr-2"></i>Book a Workshop
             </a>
-            <a href="services.html" class="btn-outline">
+            <a href="services.php" class="btn-outline">
               <i class="fa-solid fa-arrow-right mr-2"></i>Our Workshops
             </a>
           </div>
@@ -2002,7 +2010,7 @@
       class="text-center mt-10 reveal"
       style="transition-delay: 0.4s"
     >
-      <a href="about.html" class="btn-primary">
+      <a href="about.php" class="btn-primary">
         Our Story
         <i class="fa-solid fa-arrow-right ml-2"></i>
       </a>
@@ -2097,7 +2105,7 @@
                   >Starting ₹1,200</span
                 >
                 <a
-                  href="services.html"
+                  href="services.php"
                   class="text-sm font-semibold text-gold hover:text-brown transition-colors"
                   >Explore <i class="fa-solid fa-arrow-right text-xs ml-1"></i
                 ></a>
@@ -2140,7 +2148,7 @@
                   >Starting ₹900</span
                 >
                 <a
-                  href="services.html"
+                  href="services.php"
                   class="text-sm font-semibold text-gold hover:text-brown transition-colors"
                   >Explore <i class="fa-solid fa-arrow-right text-xs ml-1"></i
                 ></a>
@@ -2178,7 +2186,7 @@
                   >Starting ₹1,500</span
                 >
                 <a
-                  href="services.html"
+                  href="services.php"
                   class="text-sm font-semibold text-gold hover:text-brown transition-colors"
                   >Explore <i class="fa-solid fa-arrow-right text-xs ml-1"></i
                 ></a>
@@ -2187,7 +2195,7 @@
           </div>
         </div>
         <div class="text-center mt-12 reveal" style="transition-delay: 0.2s">
-          <a href="services.html" class="btn-primary"
+          <a href="services.php" class="btn-primary"
             >View All 15+ Workshops <i class="fa-solid fa-arrow-right ml-2"></i
           ></a>
         </div>
@@ -2482,7 +2490,7 @@
 
         <!-- CTA -->
         <a
-          href="contact.html"
+          href="contact.php"
           style="
             display:inline-flex;
             align-items:center;
@@ -2861,7 +2869,7 @@
               is just one session away.
             </p>
             <div class="flex flex-wrap gap-4 mb-8">
-              <a href="contact.html" class="btn-primary text-base px-8 py-4">
+              <a href="contact.php" class="btn-primary text-base px-8 py-4">
                 <i class="fa-regular fa-calendar-check mr-2"></i>Book a Workshop
               </a>
               <a
@@ -3080,7 +3088,7 @@
             >
               <li>
                 <a
-                  href="index.html"
+                  href="index.php"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -3098,7 +3106,7 @@
               </li>
               <li>
                 <a
-                  href="about.html"
+                  href="about.php"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -3116,7 +3124,7 @@
               </li>
               <li>
                 <a
-                  href="workshops.html"
+                  href="services.php"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -3134,7 +3142,7 @@
               </li>
               <li>
                 <a
-                  href="gallery.html"
+                  href="gallery.php"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -3152,7 +3160,7 @@
               </li>
               <li>
                 <a
-                  href="contact.html"
+                  href="contact.php"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -3170,7 +3178,7 @@
               </li>
               <li>
                 <a
-                  href="contact.html#bookingForm"
+                  href="contact.php#bookingForm"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -3215,7 +3223,7 @@
             >
               <li>
                 <a
-                  href="workshops.html"
+                  href="services.php"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -3233,7 +3241,7 @@
               </li>
               <li>
                 <a
-                  href="workshops.html"
+                  href="services.php"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -3251,7 +3259,7 @@
               </li>
               <li>
                 <a
-                  href="workshops.html"
+                  href="services.php"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -3269,7 +3277,7 @@
               </li>
               <li>
                 <a
-                  href="workshops.html"
+                  href="services.php"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -3287,7 +3295,7 @@
               </li>
               <li>
                 <a
-                  href="workshops.html"
+                  href="services.php"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -3305,7 +3313,7 @@
               </li>
               <li>
                 <a
-                  href="workshops.html"
+                  href="services.php"
                   style="
                     font-size: 0.84rem;
                     color: rgba(255, 255, 255, 0.55);
@@ -3764,5 +3772,6 @@
       window.mobileHeroSliderNext = mobileHeroSliderNext;
       window.mobileHeroSliderPrev = mobileHeroSliderPrev;
     </script>
+  <?php include __DIR__ . '/popup.php'; ?>
   </body>
 </html>
