@@ -27,6 +27,15 @@ final class BookingController extends Controller
         $filters = $this->readFilters($request);
         // Scheduled bookings only — General Enquiry rows live on the /enquiries page
         $filters['exclude_service'] = Booking::ENQUIRY_SERVICE;
+
+        // Default to 'pending' status if no filters applied
+        if (empty($filters['status']) && empty($filters['search']) && empty($filters['service_group'])
+            && empty($filters['service']) && empty($filters['date_from']) && empty($filters['date_to'])
+            && $filters['quick_range'] === 'all') {
+            $filters['status'] = 'pending';
+            $filters['quick_range'] = 'today';
+        }
+
         $page    = max(1, (int) $request->input('page', 1));
         $result  = $this->model->paginate($filters, $page);
 
@@ -178,6 +187,59 @@ final class BookingController extends Controller
         }
 
         Session::flash('success', 'Walk-in booking added successfully.');
+        $this->redirect('/bookings');
+    }
+
+    public function reschedule(Request $request, string $id): void
+    {
+        $booking = $this->model->find((int) $id);
+        if (!$booking) {
+            Session::flash('error', 'Booking not found.');
+            $this->redirect('/bookings');
+        }
+
+        $newDate = clean((string) $request->input('preferred_date', ''));
+        $newTime = clean((string) $request->input('preferred_time', ''));
+
+        if ($newDate === '' || $newTime === '') {
+            Session::flash('error', 'Please provide both date and time.');
+            $this->redirect('/bookings');
+        }
+
+        if (!strtotime($newDate)) {
+            Session::flash('error', 'Please provide a valid date.');
+            $this->redirect('/bookings');
+        }
+
+        $this->model->update((int) $id, [
+            'preferred_date' => $newDate,
+            'preferred_time' => $newTime,
+        ]);
+
+        Session::flash('success', 'Booking rescheduled successfully.');
+        $this->redirect('/bookings');
+    }
+
+    public function cancel(Request $request, string $id): void
+    {
+        $booking = $this->model->find((int) $id);
+        if (!$booking) {
+            Session::flash('error', 'Booking not found.');
+            $this->redirect('/bookings');
+        }
+
+        $reason = clean((string) $request->input('cancel_reason', ''));
+        $notes = $reason ? "[Cancelled] $reason" : '[Cancelled by admin]';
+        if (!empty($booking['notes'])) {
+            $notes = $booking['notes'] . "\n" . $notes;
+        }
+
+        $this->model->update((int) $id, [
+            'status' => 'cancelled',
+            'notes' => $notes,
+        ]);
+
+        Session::flash('success', 'Booking cancelled successfully.');
         $this->redirect('/bookings');
     }
 

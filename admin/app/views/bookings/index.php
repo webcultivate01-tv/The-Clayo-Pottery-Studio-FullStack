@@ -28,6 +28,10 @@ $statusCounts = [];
         </p>
     </div>
     <div class="flex items-center gap-2">
+        <button onclick="openCalendarModal()"
+            class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-line bg-panel text-[13px] text-ink-soft hover:bg-line-soft hover:text-ink transition">
+            <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Calendar
+        </button>
         <a href="<?= e($csvUrl) ?>"
             class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-line bg-panel text-[13px] text-ink-soft hover:bg-line-soft hover:text-ink transition">
             <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-success"></i> Excel
@@ -321,6 +325,18 @@ $statusCounts = [];
                                         class="w-7 h-7 rounded-lg grid place-items-center text-ink-soft hover:bg-brand-50 hover:text-brand transition"
                                         title="View & Update">
                                         <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                    <button
+                                        onclick="openRescheduleModal(<?= (int) $b['id'] ?>, '<?= e($b['preferred_date']) ?>', '<?= e($b['preferred_time']) ?>')"
+                                        class="w-7 h-7 rounded-lg grid place-items-center text-ink-soft hover:bg-accent-50 hover:text-accent transition"
+                                        title="Reschedule">
+                                        <i data-lucide="calendar-check" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                    <button
+                                        onclick="openCancelModal(<?= (int) $b['id'] ?>, '<?= e(addslashes($b['customer_name'])) ?>')"
+                                        class="w-7 h-7 rounded-lg grid place-items-center text-ink-soft hover:bg-warn-50 hover:text-warn transition"
+                                        title="Cancel Booking">
+                                        <i data-lucide="ban" class="w-3.5 h-3.5"></i>
                                     </button>
                                     <button
                                         onclick="openDeleteModal(<?= (int) $b['id'] ?>, '<?= e(addslashes($b['customer_name'])) ?>')"
@@ -723,6 +739,145 @@ $statusCounts = [];
 </div>
 
 
+<!-- ════════════════════════════════════════════════════════
+     MODAL: Reschedule Booking
+════════════════════════════════════════════════════════ -->
+<div id="rescheduleModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="closeModal('rescheduleModal')"></div>
+    <div class="relative bg-panel rounded-2xl shadow-pop w-full max-w-sm">
+        <!-- Header -->
+        <div class="flex items-center justify-between px-6 py-4 border-b border-line">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-accent-50 grid place-items-center">
+                    <i data-lucide="calendar-check" class="w-4 h-4 text-accent"></i>
+                </div>
+                <div>
+                    <h3 class="font-display text-[15px] font-bold text-ink">Reschedule Booking</h3>
+                    <p class="text-[11px] text-muted">Change date and time</p>
+                </div>
+            </div>
+            <button onclick="closeModal('rescheduleModal')" class="w-8 h-8 rounded-lg grid place-items-center text-ink-soft hover:bg-line-soft transition">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+        <!-- Body -->
+        <form id="rescheduleForm" action="" method="POST" class="p-6 space-y-4">
+            <?= csrf_field() ?>
+            <div>
+                <label class="bk-label">Preferred Date <span class="text-danger">*</span></label>
+                <input type="date" name="preferred_date" id="rs_date" required class="bk-input">
+            </div>
+            <div>
+                <label class="bk-label">Preferred Time <span class="text-danger">*</span></label>
+                <select name="preferred_time" id="rs_time" required class="bk-input">
+                    <option value="">— Select a slot —</option>
+                    <?php
+                    $slots = ['10:00 AM','11:00 AM','12:00 PM','02:00 PM','03:00 PM','04:00 PM','05:00 PM','06:00 PM'];
+                    foreach ($slots as $slot): ?>
+                        <option value="<?= e($slot) ?>"><?= e($slot) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="pt-2 flex gap-3">
+                <button type="submit"
+                    class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-accent to-accent-700 text-white text-[13px] font-semibold hover:opacity-90 transition shadow-card">
+                    Reschedule
+                </button>
+                <button type="button" onclick="closeModal('rescheduleModal')"
+                    class="px-5 py-2.5 rounded-xl border border-line text-[13px] text-ink-soft hover:bg-line-soft transition">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════
+     MODAL: Cancel Booking
+════════════════════════════════════════════════════════ -->
+<div id="cancelModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="closeModal('cancelModal')"></div>
+    <div class="relative bg-panel rounded-2xl shadow-pop w-full max-w-sm">
+        <!-- Header -->
+        <div class="flex items-center justify-between px-6 py-4 border-b border-line">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-warn-50 grid place-items-center">
+                    <i data-lucide="ban" class="w-4 h-4 text-warn"></i>
+                </div>
+                <div>
+                    <h3 class="font-display text-[15px] font-bold text-ink">Cancel Booking</h3>
+                    <p class="text-[11px] text-muted">Mark as cancelled</p>
+                </div>
+            </div>
+            <button onclick="closeModal('cancelModal')" class="w-8 h-8 rounded-lg grid place-items-center text-ink-soft hover:bg-line-soft transition">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+        <!-- Body -->
+        <form id="cancelForm" action="" method="POST" class="p-6 space-y-4">
+            <?= csrf_field() ?>
+            <p class="text-[13px] text-muted">
+                Are you sure you want to cancel the booking for <strong id="cancelBookingName" class="text-ink"></strong>?
+            </p>
+            <div>
+                <label class="bk-label">Cancellation Reason (Optional)</label>
+                <textarea name="cancel_reason" id="cancel_reason" rows="3" class="bk-input resize-none" placeholder="e.g., Customer requested, No show, etc."></textarea>
+            </div>
+            <div class="pt-2 flex gap-3">
+                <button type="submit"
+                    class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-warn to-warn-700 text-white text-[13px] font-semibold hover:opacity-90 transition shadow-card">
+                    Yes, Cancel Booking
+                </button>
+                <button type="button" onclick="closeModal('cancelModal')"
+                    class="px-5 py-2.5 rounded-xl border border-line text-[13px] text-ink-soft hover:bg-line-soft transition">
+                    Keep It
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════
+     MODAL: Calendar Picker
+════════════════════════════════════════════════════════ -->
+<div id="calendarModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="closeModal('calendarModal')"></div>
+    <div class="relative bg-panel rounded-2xl shadow-pop w-full max-w-md">
+        <!-- Header -->
+        <div class="flex items-center justify-between px-6 py-4 border-b border-line">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-brand-50 grid place-items-center">
+                    <i data-lucide="calendar" class="w-4 h-4 text-brand"></i>
+                </div>
+                <div>
+                    <h3 class="font-display text-[15px] font-bold text-ink">Select Date</h3>
+                    <p class="text-[11px] text-muted">View bookings for a specific date</p>
+                </div>
+            </div>
+            <button onclick="closeModal('calendarModal')" class="w-8 h-8 rounded-lg grid place-items-center text-ink-soft hover:bg-line-soft transition">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+        <!-- Body -->
+        <div class="p-6">
+            <div id="calendarPicker"></div>
+            <div class="mt-4 pt-4 border-t border-line flex gap-2">
+                <button type="button" onclick="goToToday()"
+                    class="flex-1 py-2 px-3 rounded-lg border border-line text-[13px] text-ink-soft hover:bg-line-soft transition">
+                    Today
+                </button>
+                <button type="button" onclick="applyCalendarDate()"
+                    class="flex-1 py-2 px-3 rounded-lg bg-brand text-white text-[13px] font-semibold hover:opacity-90 transition">
+                    Go to Date
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <style>
 .bk-label {
     display: block;
@@ -900,11 +1055,108 @@ function openViewModal(b) {
     if (window.lucide) lucide.createIcons();
 }
 
+function openCancelModal(id, name) {
+    document.getElementById('cancelForm').action = BASE + '/bookings/' + id + '/cancel';
+    document.getElementById('cancelBookingName').textContent = name;
+    document.getElementById('cancel_reason').value = '';
+    document.getElementById('cancelModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
 function openDeleteModal(id, name) {
     document.getElementById('deleteForm').action         = BASE + '/bookings/' + id + '/delete';
     document.getElementById('deleteBookingName').textContent = name;
     document.getElementById('deleteModal').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
+}
+
+function openRescheduleModal(id, currentDate, currentTime) {
+    document.getElementById('rescheduleForm').action = BASE + '/bookings/' + id + '/reschedule';
+    document.getElementById('rs_date').value = currentDate;
+    document.getElementById('rs_time').value = currentTime;
+    document.getElementById('rescheduleModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function openCalendarModal() {
+    document.getElementById('calendarModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    renderCalendar();
+}
+
+function renderCalendar() {
+    var today = new Date();
+    var currentYear = today.getFullYear();
+    var currentMonth = today.getMonth();
+    var currentDate = today.getDate();
+
+    var monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                      'July', 'August', 'September', 'October', 'November', 'December'];
+    var firstDay = new Date(currentYear, currentMonth, 1);
+    var lastDay = new Date(currentYear, currentMonth + 1, 0);
+    var daysInMonth = lastDay.getDate();
+    var startingDayOfWeek = firstDay.getDay();
+
+    var html = '<div class="mb-4">';
+    html += '<div class="text-center mb-4">';
+    html += '<h4 class="font-semibold text-ink">' + monthNames[currentMonth] + ' ' + currentYear + '</h4>';
+    html += '</div>';
+
+    html += '<div class="grid grid-cols-7 gap-1">';
+    var dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    dayNames.forEach(function(day) {
+        html += '<div class="text-center text-[11px] font-semibold text-muted py-2">' + day + '</div>';
+    });
+
+    for (var i = 0; i < startingDayOfWeek; i++) {
+        html += '<div></div>';
+    }
+
+    for (var day = 1; day <= daysInMonth; day++) {
+        var isToday = day === currentDate && currentMonth === new Date().getMonth() && currentYear === new Date().getFullYear();
+        var dateStr = currentYear + '-' + String(currentMonth + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+        var cls = isToday ? 'bg-brand text-white font-semibold' : 'text-ink hover:bg-line-soft';
+        html += '<button type="button" onclick="selectCalendarDate(\'' + dateStr + '\')" ' +
+                'class="py-2 rounded-lg text-[13px] ' + cls + ' transition" ' +
+                'data-date="' + dateStr + '">' + day + '</button>';
+    }
+    html += '</div></div>';
+
+    document.getElementById('calendarPicker').innerHTML = html;
+}
+
+function selectCalendarDate(dateStr) {
+    document.querySelectorAll('[data-date]').forEach(function(btn) {
+        btn.classList.remove('bg-brand', 'text-white', 'font-semibold');
+        btn.classList.add('text-ink', 'hover:bg-line-soft');
+    });
+
+    var selected = document.querySelector('[data-date="' + dateStr + '"]');
+    if (selected) {
+        selected.classList.remove('text-ink', 'hover:bg-line-soft');
+        selected.classList.add('bg-brand', 'text-white', 'font-semibold');
+    }
+
+    window.selectedCalendarDate = dateStr;
+}
+
+function applyCalendarDate() {
+    if (!window.selectedCalendarDate) {
+        alert('Please select a date');
+        return;
+    }
+
+    var url = BASE + '/bookings?status=pending&quick_range=all&date_from=' + window.selectedCalendarDate +
+              '&date_to=' + window.selectedCalendarDate;
+    window.location.href = url;
+}
+
+function goToToday() {
+    var today = new Date();
+    var dateStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') +
+                  '-' + String(today.getDate()).padStart(2, '0');
+    window.selectedCalendarDate = dateStr;
+    selectCalendarDate(dateStr);
 }
 
 function closeModal(id) {
@@ -924,7 +1176,7 @@ function openAddModal() {
 
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
-        ['addModal','viewModal','deleteModal','cropModal','lightbox'].forEach(closeModal);
+        ['addModal','viewModal','deleteModal','rescheduleModal','cancelModal','calendarModal','cropModal','lightbox'].forEach(closeModal);
         closeCrop();
     }
 });

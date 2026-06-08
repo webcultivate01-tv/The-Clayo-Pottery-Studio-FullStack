@@ -70,6 +70,8 @@ return function (Router $router): void {
     $router->get('/bookings/export',                [BookingController::class, 'export'],       [AuthMiddleware::class]);
     $router->post('/bookings/store',                [BookingController::class, 'store'],        [CsrfMiddleware::class, AuthMiddleware::class]);
     $router->post('/bookings/{id}/status',          [BookingController::class, 'updateStatus'], [CsrfMiddleware::class, AuthMiddleware::class]);
+    $router->post('/bookings/{id}/reschedule',      [BookingController::class, 'reschedule'],   [CsrfMiddleware::class, AuthMiddleware::class]);
+    $router->post('/bookings/{id}/cancel',          [BookingController::class, 'cancel'],       [CsrfMiddleware::class, AuthMiddleware::class]);
     $router->post('/bookings/{id}/images',          [BookingController::class, 'uploadImage'],  [CsrfMiddleware::class, AuthMiddleware::class]);
     $router->post('/bookings/{id}/images/delete',   [BookingController::class, 'deleteImage'],  [CsrfMiddleware::class, AuthMiddleware::class]);
     $router->post('/bookings/{id}/delete',          [BookingController::class, 'destroy'],      [CsrfMiddleware::class, AuthMiddleware::class]);
